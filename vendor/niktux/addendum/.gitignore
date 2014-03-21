@@ -1,0 +1,8 @@
+# Eclipse files
+.settings
+.project
+.buildpath
+.externalToolBuilders
+
+# Dependencies
+vendor

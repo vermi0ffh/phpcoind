@@ -1,0 +1,28 @@
+{
+    "name": "niktux/addendum",
+    "type": "library",
+    "description": "Annotations support for PHP (fork of addendum)",
+    "keywords": ["annotations", "metadata", "docblock", "parser"],
+    "authors": [
+        {
+            "name": "Nicolas Le Nardou",
+            "email": "nico.ln@gmail.com"
+        },
+        {
+            "name": "Johno Suchal",
+            "email": "jan.suchal@gmail.com"
+        }
+    ],
+    "require-dev":
+    {
+        "phpunit/phpunit" : "~3.7"
+    },
+    "autoload":
+    {
+        "psr-0":
+        {
+            "Addendum": "lib/",
+            "Tests\\Addendum": ""
+        }
+    }
+}

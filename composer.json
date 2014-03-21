@@ -1,0 +1,27 @@
+{
+	"name": "vermi0ffh/coind",
+	"description": "A coin daemon implementation in PHP. It is compatible with most coins through configuration.",
+	"keywords": [
+		"bitcoin", "litecoin", "dogecoin", "client", "server"
+	],
+	"homepage": "https://github.com/",
+	"license": "MIT",
+	"support": {
+		"issues": "https://github.com/Anizoptera/AzaSocket/issues"
+	},
+	"authors": [
+		{"name": "Aurélien RICHAUD", "email": "aurelien.richaud@btoweb.fr", "homepage": "https://github.com/amal"},
+		{"name": "AzaGroup Members"}
+	],
+	"require": {
+		"php": ">=5.4.0",
+        "niktux/addendum" : "0.4.4",
+        "aza/socket" : "1.0.2",
+        "pleonasm/merkle-tree": "1.0.0",
+        "monolog/monolog": "1.7.0"
+	},
+    "autoload": {
+        "psr-4": {"Vermi0ffh\\": "Vermi0ffh/"}
+    }
+
+}
