@@ -291,13 +291,18 @@ class NetworkSerializer extends AnnotatorObjectSerializer {
     function write_set($stream, $set, $set_type) {
         // Check if the asked type is readable
         if ( !method_exists($this, 'write_'.$set_type) ) {
-            throw new UnsupportedTypeException($set_type);
+            if (!class_exists($set_type)) {
+                throw new UnsupportedTypeException($set_type);
+            }
+
+            // We know how to write objects
+            $set_type = 'object';
         }
 
         // Callable read function
         $write_func = array(
             $this,
-            'read_'.$set_type,
+            'write_'.$set_type,
         );
 
         // Write set length

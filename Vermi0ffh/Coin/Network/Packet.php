@@ -8,6 +8,7 @@ use Vermi0ffh\Coin\Payload\Addr,
     Vermi0ffh\Coin\Payload\GetBlocks,
     Vermi0ffh\Coin\Payload\GetData,
     Vermi0ffh\Coin\Payload\GetHeaders,
+    Vermi0ffh\Coin\Payload\Headers,
     Vermi0ffh\Coin\Payload\Inv,
     Vermi0ffh\Coin\Payload\NotFound,
     Vermi0ffh\Coin\Payload\Tx,
@@ -15,6 +16,7 @@ use Vermi0ffh\Coin\Payload\Addr,
     Vermi0ffh\Coin\Payload\Void;
 use Vermi0ffh\Coin\Util\Impl\DSha256ChecksumComputer;
 use Vermi0ffh\Coin\Util\Serializer;
+use Vermi0ffh\Exception\PayloadParseException;
 use Vermi0ffh\Exception\StreamException;
 
 class Packet {
@@ -41,6 +43,7 @@ class Packet {
 
     /**
      * Get class name of Payload based on command
+     * @throws \Exception
      * @return string
      */
     public function getPayloadClassName() {
@@ -67,6 +70,10 @@ class Packet {
                 $classname = 'Vermi0ffh\Coin\Payload\GetHeaders';
                 break;
 
+            case 'headers':
+                $classname = 'Vermi0ffh\Coin\Payload\Headers';
+                break;
+
             case 'inv':
                 $classname = 'Vermi0ffh\Coin\Payload\Inv';
                 break;
@@ -88,6 +95,7 @@ class Packet {
                 break;
 
             default:
+                throw new Exception("No Payload class found for message type : " . $this->header->command);
         }
 
         return $classname;
@@ -168,7 +176,7 @@ class Packet {
             fclose($stream_payload);
 
             // Forward exception
-            throw $e;
+            throw new PayloadParseException($e);
         }
 
         fclose($stream_payload);

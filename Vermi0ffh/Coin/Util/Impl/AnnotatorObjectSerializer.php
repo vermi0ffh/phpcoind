@@ -283,6 +283,19 @@ abstract class AnnotatorObjectSerializer implements Serializer {
                 }
             }
 
+            // Compute parameters for the write function
+            $params = get_object_vars($type_annotation);
+            if (isset($params['type'])) {
+                unset($params['type']);
+            }
+            unset($params['value']);
+
+            $params = array_merge(array(
+                $stream,
+                $value,
+            ), $params);
+
+
             // If needed, use the object serializer
             if (!method_exists($this, 'write_' .$type) && is_object($value)) {
                 $type = 'object';
@@ -290,10 +303,10 @@ abstract class AnnotatorObjectSerializer implements Serializer {
 
             if (method_exists($this, 'write_' .$type)) {
                 // Serialize the content
-                call_user_func(array(
+                call_user_func_array(array(
                     $this,
                     'write_' .$type
-                ), $stream, $value);
+                ), $params);
             }
         }
     }

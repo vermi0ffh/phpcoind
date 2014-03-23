@@ -6,7 +6,7 @@ use Vermi0ffh\Coin\Component\NetworkAddressTimestamp;
 use Vermi0ffh\Coin\Payload\Block;
 use Vermi0ffh\Coin\Storage\Store;
 
-class Pdo implements Store {
+class PdoStore implements Store {
     /**
      * This method initialize the store. Creatre tables, etc...
      */

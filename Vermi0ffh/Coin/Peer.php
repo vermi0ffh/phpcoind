@@ -5,14 +5,21 @@ namespace Vermi0ffh\Coin;
 use Aza\Components\Socket\SocketStream;
 use Exception;
 use Monolog\Logger;
+use Vermi0ffh\Coin\Component\Hash;
 use Vermi0ffh\Coin\Component\InvVect;
 use Vermi0ffh\Coin\Component\NetworkAddress;
 use Vermi0ffh\Coin\Network\Packet;
 use Vermi0ffh\Coin\Payload\Addr;
 use Vermi0ffh\Coin\Payload\Alert;
+use Vermi0ffh\Coin\Payload\Block;
+use Vermi0ffh\Coin\Payload\GetBlocks;
+use Vermi0ffh\Coin\Payload\GetData;
+use Vermi0ffh\Coin\Payload\GetHeaders;
+use Vermi0ffh\Coin\Payload\Headers;
 use Vermi0ffh\Coin\Payload\Inv;
 use Vermi0ffh\Coin\Payload\Version;
 use Vermi0ffh\Coin\Payload\Void;
+use Vermi0ffh\Coin\Storage\Impl\PdoStore;
 use Vermi0ffh\Coin\Util\Impl\NetworkSerializer;
 use Vermi0ffh\Exception\StreamException;
 
@@ -28,6 +35,8 @@ class Peer {
 
     protected $_read_buffer;
     protected $_write_packets = array();
+
+    protected $_store;
 
     protected function createPacket($command) {
         $packet = new Packet();
@@ -82,11 +91,26 @@ class Peer {
                 }
                 break;
 
+            case 'block':
+                // Alert packet : an important message. We log it !
+                if ($packet->payload instanceof Block) {
+                    $this->getLogger()->addAlert('Block received : ' . bin2hex($packet->payload->block_hash) );
+                    $this->getLogger()->addAlert('Block # transactions : ' . count($packet->payload->tx) );
+                }
+                break;
+
+            case 'headers':
+                if ($packet->payload instanceof Headers) {
+                    $this->getLogger()->addInfo("Headers received for " . count($packet->payload->block_header) . ' blocks');
+                    foreach($packet->payload->block_header as $block_header) {
+                        $this->getLogger()->addInfo("Received header for block : " . bin2hex($block_header->merkle_root->value));
+                    }
+                }
+                break;
+
             case 'inv':
                 if ($packet->payload instanceof Inv) {
                     foreach($packet->payload->inventory as $inv_vect) {
-                        $type = '';
-
                         switch($inv_vect->type) {
                             case InvVect::OBJECT_ERROR:
                                 $type = 'Error';
@@ -114,11 +138,30 @@ class Peer {
                 break;
 
             case 'verack':
-                $getaddr_packet = $this->createPacket('getaddr');
+                /*$getaddr_packet = $this->createPacket('getaddr');
 
                 // Create the version payload
                 $getaddr_packet->payload = new Void();
-                $this->writePacket($getaddr_packet);
+                $this->writePacket($getaddr_packet);*/
+
+                /////////////////////////////////
+                // Check if we have genesis block
+                $genesis_block = $this->getStore()->readBlock($GLOBALS['genesis_block'][ $GLOBALS['coind']['coin_network'] ]);
+                if ($genesis_block == null) {
+                    // We need to download the genesis block !
+                    $getblock_packet = $this->createPacket('getheaders');
+                    $getblock_packet->payload = new GetHeaders();
+                    $getblock_packet->payload->version = $GLOBALS['protocol_version'][ $GLOBALS['coind']['coin_network' ] ];
+                    $getblock_packet->payload->block_locator_hashes = array();
+                    $hash = new Hash();
+                    $hash->value = $GLOBALS['genesis_block'][ $GLOBALS['coind']['coin_network'] ];
+                    $getblock_packet->payload->block_locator_hashes[] = $hash;
+                    $hashnull = new Hash();
+                    $hashnull->value = hex2bin('00000000000000000000000000000000');
+                    $getblock_packet->payload->hash_stop = $hashnull;
+                    $this->writePacket($getblock_packet);
+                }
+
                 break;
 
             default:
@@ -137,6 +180,7 @@ class Peer {
             $logger = $GLOBALS['logger'];
         }
         $this->_logger = $logger;
+        $this->_store = new PdoStore();
     }
 
 
@@ -185,16 +229,11 @@ class Peer {
                         /** @var $packet Packet */
                         $serializer = new NetworkSerializer();
 
-                        $stream = fopen('toto.log', 'w+');
-
                         foreach($this->_write_packets as $packet) {
                             $this->getLogger()->addInfo('Packet sent : ' . $packet->header->command);
                             $serializer->write_object($this->getSocket()->resource, $packet);
-                            $serializer->write_object($stream, $packet);
                         }
                         $this->_write_packets = array();
-
-                        fclose($stream);
                     }
 
                     // We have a packet waiting
@@ -321,5 +360,12 @@ class Peer {
 
     public function writePacket(Packet $packet) {
         $this->_write_packets[] = $packet;
+    }
+
+    /**
+     * @return \Vermi0ffh\Coin\Storage\Impl\PdoStore
+     */
+    public function getStore() {
+        return $this->_store;
     }
 }
