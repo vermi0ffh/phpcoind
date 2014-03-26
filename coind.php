@@ -8,31 +8,30 @@ require_once __DIR__ . '/vendor/autoload.php';
 
 /////////////////////////////////////////////////
 // Util functions
-require_once __DIR__ . '/Vermi0ffh/Coin/Util/functions.php';
+require_once __DIR__ . '/PhpCoinD/Protocol/Util/functions.php';
 
 
 /////////////////////////////////////////////////
 // Coind config
-use Aza\Components\Socket\SocketStream;
 use Monolog\Logger;
-use Vermi0ffh\Coin\Peer;
+use Monolog\Handler\StreamHandler;
+use PhpCoinD\Exception\PeerNotReadyException;
+use PhpCoinD\Protocol\Network\DogeCoin;
+use PhpCoinD\Protocol\Network;
+use PhpCoinD\Storage\Store;
+use PhpCoinD\Network\AsyncSocket;
+use PhpCoinD\Network\CoinNetworkSocketManager;
 
 $GLOBALS['coind'] = array(
-    // Network binding : IPv4 + IPv6, allow everybody to connect
-    'coin_network' => 'dogecoin',
-    'coin_binds' => array(
-        'tcp://0.0.0.0:2500',
-        'tcp://[::1]:2500',
-    ),
-    'rpc_binds' => array(
+    'networks' => array(
         array(
-            'domain' => AF_INET,
-            'hostname' => '127.0.0.1',
-            'port' => 2527,
-        ),
-    ),
-    'bootstrap' => array(
-        'tcp://192.168.42.128:22556',
+            'network' => new DogeCoin(),
+            'store' => array(
+                'class' => 'PhpCoinD\Storage\Impl\MongoStore',
+                'url' => 'mongodb://localhost:27017/dogecoin',
+                'db' => 'dogecoin',
+            ),
+        )
     ),
     'logger' => array(
         array(
@@ -40,49 +39,24 @@ $GLOBALS['coind'] = array(
             'filename' => 'coind.log',
             'level' => Logger::INFO,
         ),
+        array(
+            'type' => 'StreamHandler',
+            'filename' => 'php://output',
+            'level' => Logger::DEBUG,
+        ),
     ),
 );
 
 
 /////////////////////////////////////////////////
-// Magic Values of coin networks
-$GLOBALS['magic_values'] = array(
-    'main' => 0xd9b4bef9,
-    'testnet' => 0xdab5bffa,
-    'testnet3' => 0x0709110b,
-    'amecoin' => 0xfeb4bef9,
-    'bitcoin' => 0xd9b4bef9,
-    'bitcoin_testnet' => 0xdab5bffa,
-    'bitcoin_testnet3' => 0x0709110b,
-    'namecoin' => 0xfeb4bef9,
-    'litecoin' => 0xdbb6c0fb,
-    'litecoin_testnet' => 0xdcb7c1fc,
-    'dogecoin' => 0xc0c0c0c0,
-);
-
-$GLOBALS['genesis_block'] = array(
-    //'dogecoin' => hex2bin('1a91e3dace36e2be3bf030a65679fe821aa1d6ef92e7c9902eb318182c355691'),
-    'dogecoin' => hex2bin('9156352c1818b32e90c9e792efd6a11a82fe7956a630f03bbee236cedae3911a'),
-);
-
-$GLOBALS['protocol_version'] = array(
-    'dogecoin' => 70002,
-);
-
-$GLOBALS['client_version'] = array(
-    'dogecoin' => 1 * 1000000 + 6 * 10000 + 0 * 100 + 0,
-);
-
-
-/////////////////////////////////////////////////
 // Init logger
-$GLOBALS['logger'] = new Logger('name');
+$logger = new Logger('name');
 
 // Add log methods
 foreach($GLOBALS['coind']['logger'] as $logger_config) {
     switch($logger_config['type']) {
         case 'StreamHandler':
-            $GLOBALS['logger']->pushHandler(new \Monolog\Handler\StreamHandler($logger_config['filename'], $logger_config['level']));
+            $logger->pushHandler(new StreamHandler($logger_config['filename'], $logger_config['level']));
             break;
 
         default:
@@ -90,75 +64,144 @@ foreach($GLOBALS['coind']['logger'] as $logger_config) {
 }
 
 
-
 /////////////////////////////////////////////////
 // Startup
-$GLOBALS['logger']->addInfo("System startup...");
+$logger->addInfo("System startup...");
 
-// Create nonce token
-$GLOBALS['nonce'] = rand(0, 100000);
 
-$GLOBALS['coin_sockets'] = array();
-foreach($GLOBALS['coind']['coin_binds'] as $url) {
-    $GLOBALS['coin_sockets'][] = SocketStream::server($url);
+/** @var $coin_networks CoinNetworkSocketManager[] */
+$coin_networks = array();
+
+foreach($GLOBALS['coind']['networks'] as $coin_network_def) {
+    /** @var $store Store Build a store object */
+    $store = new $coin_network_def['store']['class']($coin_network_def['store']);
+
+    /** @var $network Network */
+    $network = $coin_network_def['network'];
+    $network->setStore($store);
+
+    $coin_networks[] = new CoinNetworkSocketManager($network, $logger);
 }
-
-if (count($GLOBALS['coin_sockets']) == 0) {
-    exit();
-}
-
-
-// Container for peers
-$peers = array();
 
 
 /////////////////////////////////////////////////
-// Boucle principale
+// Signal handler
 declare(ticks=1);
 $GLOBALS['shutdown'] = false;
 pcntl_signal(SIGTERM, function($signo) {
     $GLOBALS['shutdown'] = true;
 });
 
-$GLOBALS['logger']->addInfo("Connecting to bootstrap peers...");
-foreach($GLOBALS['coind']['bootstrap'] as $url) {
-    $GLOBALS['logger']->addInfo(" - " . $url);
-    try {
-        $peer = Peer::connect($url);
-        $peer->run();
-
-        $peers[] = $peer;
-    } catch(Exception $e) {
-        $GLOBALS['logger']->addWarning($e);
-    }
+/////////////////////////////////////////////////
+// Main loop
+$logger->addInfo("Connecting to bootstrap peers...");
+foreach($coin_networks as $coin_network) {
+    // TODO : Static bootstrap for dev only
+    $coin_network->bootstrap(array(
+        'tcp://127.0.0.1:22556',
+        'tcp://192.168.42.128:22556',
+    ));
 }
 
 
-$GLOBALS['logger']->addInfo("Entering main loop...");
+$logger->addInfo("Entering main loop...");
 while(!$GLOBALS['shutdown']) {
-    $sockets = array(
-        'read' => array(),
-        'write' => array()
-    );
+    // Prepare sockets arrays for stream_select
+    $read_sockets = array();
+    $write_sockets = array();
+    $close_sockets = array();
 
-    /** @var $socket SocketStream */
-    foreach($GLOBALS['coin_sockets'] as $socket) {
-        $sockets['read'][] = $socket->resource;
+
+    /** @var $network_sockets AsyncSocket[] */
+    $sockets_objects = array();
+    /** @var $all_sockets resource[] */
+    $all_sockets = array();
+    /** @var $all_sockets resource[] */
+    $all_write_sockets = array();
+
+    // We manage all coin networks
+    foreach($coin_networks as $coin_network) {
+        /** @var $all_sockets AsyncSocket[] */
+        $network_sockets = array_merge($coin_network->getServerSockets(), $coin_network->getPeers());
+
+        // Translate sockets structure for stream_select
+        foreach($network_sockets as $async_socket) {
+            $sockets_objects[] = $async_socket;
+            $all_sockets[] = $async_socket->getSocketResource();
+
+            // We check for write only socket with writes pending ! Else stream_select will go nuts !
+            if ($async_socket->hasWritePending()) {
+                $all_write_sockets[] = $async_socket->getSocketResource();
+            }
+        }
     }
 
-    $nb_socks = stream_select($sockets['read'], $sockets['write'], $sockets['write'], 0, 100);
+    // Duplicates array (because stream_select change arrays)
+    $sockets = array(
+        'read' => $all_sockets,
+        'write' => $all_write_sockets,
+        'close' => $all_sockets,
+    );
+
+    // Check all sockets for read, write or error (wait .5 seconds max)
+    $nb_socks = stream_select($sockets['read'], $sockets['write'], $sockets['close'], 0, 500);
 
     // Sockets have moved !
     if ($nb_socks > 0) {
-        /** @var $socket SocketStream */
+        /////////////////////////////////////////
+        // Read events
         foreach($sockets['read'] as $socket) {
-            $GLOBALS['logger']->addInfo("New connection detected");
+            $socket_id = array_search($socket, $all_sockets);
 
-            $clisock = $socket->accept();
-            $peer = new Peer($clisock);
-            $peer->run();
+            if ($socket_id === false) {
+                $logger->addWarning("Can't find a socket after stream_select : " . $socket);
+            } else {
+                /** @var $sockets_object AsyncSocket */
+                $sockets_object = $sockets_objects[$socket_id];
+                $sockets_object->onRead();
+            }
+        }
 
-            $peers[] = $peer;
+        /////////////////////////////////////////
+        // Write events
+        foreach($sockets['write'] as $socket) {
+            $socket_id = array_search($socket, $all_sockets);
+
+            if ($socket_id === false) {
+                $logger->addWarning("Can't find a socket after stream_select : " . $socket);
+            } else {
+                /** @var $sockets_object AsyncSocket */
+                $sockets_object = $sockets_objects[$socket_id];
+                $sockets_object->onWrite();
+            }
+        }
+
+
+        /////////////////////////////////////////
+        // Close events
+        foreach($sockets['close'] as $socket) {
+            $socket_id = array_search($socket, $all_sockets);
+
+            if ($socket_id === false) {
+                $logger->addWarning("Can't find a socket after stream_select : " . $socket);
+            } else {
+                /** @var $sockets_object AsyncSocket */
+                $sockets_object = $sockets_objects[$socket_id];
+                $sockets_object->onClose();
+            }
+        }
+    }
+
+
+    // Launch timed actions
+    foreach($coin_networks as $coin_network) {
+        try {
+            $coin_network->doTimedActions();
+        } catch (PeerNotReadyException $e) {
+            /* Nothing to do except waiting */
+        } catch (Exception $e) {
+            // Log the exception
+            $logger->addWarning($e);
         }
     }
 }
@@ -166,19 +209,14 @@ while(!$GLOBALS['shutdown']) {
 
 /////////////////////////////////////////////////
 // Shutdown procedure
-$GLOBALS['logger']->addInfo("Shutdown...");
+$logger->addInfo("Shutdown...");
 
 // Close sockets
-/** @var $socket SocketStream */
-foreach($GLOBALS['coin_sockets'] as $socket) {
-    $socket->close();
-}
-
-// Kill peers
-/** @var $peer Peer */
-foreach($peers as $peer) {
-    posix_kill($peer->getPid(), SIGTERM);
-    $status = 0;
-    pcntl_waitpid($peer->getPid(), $status);
+foreach($coin_networks as $coin_network) {
+    try {
+        $coin_network->shutdown();
+    } catch (Exception $e) {
+        $logger->addWarning($e);
+    }
 }
 exit();

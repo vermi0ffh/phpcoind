@@ -3,7 +3,7 @@
         "This file locks the dependencies of your project to a known state",
         "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file"
     ],
-    "hash": "66a16eda55e2c0a8902856020a954132",
+    "hash": "8b5c0826aef3e2676831bd055210f30b",
     "packages": [
         {
             "name": "aza/socket",

@@ -2,7 +2,7 @@
 	"name": "vermi0ffh/coind",
 	"description": "A coin daemon implementation in PHP. It is compatible with most coins through configuration.",
 	"keywords": [
-		"bitcoin", "litecoin", "dogecoin", "client", "server"
+		"bitcoin", "litecoin", "dogecoin", "altcoin", "client", "server"
 	],
 	"homepage": "https://github.com/",
 	"license": "MIT",
@@ -10,8 +10,7 @@
 		"issues": "https://github.com/Anizoptera/AzaSocket/issues"
 	},
 	"authors": [
-		{"name": "Aurélien RICHAUD", "email": "aurelien.richaud@btoweb.fr", "homepage": "https://github.com/amal"},
-		{"name": "AzaGroup Members"}
+		{"name": "Aurélien RICHAUD", "email": "aurelien.richaud@btoweb.fr", "homepage": "https://github.com/vermi0ffh/"}
 	],
 	"require": {
 		"php": ">=5.4.0",
@@ -21,7 +20,7 @@
         "monolog/monolog": "1.7.0"
 	},
     "autoload": {
-        "psr-4": {"Vermi0ffh\\": "Vermi0ffh/"}
+        "psr-4": {"PhpCoinD\\": "PhpCoinD/"}
     }
 
 }
