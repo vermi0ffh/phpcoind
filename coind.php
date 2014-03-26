@@ -32,7 +32,7 @@ $GLOBALS['coind'] = array(
         ),
     ),
     'bootstrap' => array(
-        'tcp://127.0.0.1:22556',
+        'tcp://192.168.42.128:22556',
     ),
     'logger' => array(
         array(
@@ -61,7 +61,8 @@ $GLOBALS['magic_values'] = array(
 );
 
 $GLOBALS['genesis_block'] = array(
-    'dogecoin' => 0x1a91e3dace36e2be3bf030a65679fe821aa1d6ef92e7c9902eb318182c355691,
+    //'dogecoin' => hex2bin('1a91e3dace36e2be3bf030a65679fe821aa1d6ef92e7c9902eb318182c355691'),
+    'dogecoin' => hex2bin('9156352c1818b32e90c9e792efd6a11a82fe7956a630f03bbee236cedae3911a'),
 );
 
 $GLOBALS['protocol_version'] = array(

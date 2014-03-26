@@ -1,7 +1,6 @@
 <?php
 namespace Vermi0ffh\Coin\Payload;
 
-
 use Vermi0ffh\Coin\Annotation\Set;
 use Vermi0ffh\Coin\Component\BlockHeader;
 use Vermi0ffh\Coin\Network\Payload;
