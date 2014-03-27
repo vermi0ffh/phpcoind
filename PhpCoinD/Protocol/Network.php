@@ -1,5 +1,6 @@
 <?php
 namespace PhpCoinD\Protocol;
+use PhpCoinD\Protocol\Payload\Block;
 use PhpCoinD\Storage\Store;
 
 
@@ -8,6 +9,12 @@ use PhpCoinD\Storage\Store;
  * @package PhpCoinD\Coin
  */
 interface Network {
+    /**
+     * Create the genesis block for the network
+     * @return Block
+     */
+    public function createGenesisBlock();
+
     /**
      * The client version advertised
      * @return int
@@ -18,7 +25,7 @@ interface Network {
      * The binary representation of the genesis block
      * @return string
      */
-    public function getGenesisBlock();
+    public function getGenesisBlockHash();
 
 
     /**

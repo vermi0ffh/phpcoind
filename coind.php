@@ -75,6 +75,7 @@ $coin_networks = array();
 foreach($GLOBALS['coind']['networks'] as $coin_network_def) {
     /** @var $store Store Build a store object */
     $store = new $coin_network_def['store']['class']($coin_network_def['store']);
+    $store->initializeStore();
 
     /** @var $network Network */
     $network = $coin_network_def['network'];

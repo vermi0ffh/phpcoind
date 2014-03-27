@@ -134,7 +134,7 @@ class CoinNetworkSocketManager {
             $getblock_packet->payload = new GetData();
             $getblock_packet->payload->inventory = array();
             $inv_vect = new InvVect();
-            $inv_vect->hash = new Hash($this->getNetwork()->getGenesisBlock());
+            $inv_vect->hash = new Hash($this->getNetwork()->getGenesisBlockHash());
             $inv_vect->type = InvVect::OBJECT_MSG_BLOCK;
             $getblock_packet->payload->inventory[] = $inv_vect;
 /*            $getblock_packet->payload->version = $this->getNetwork()->getProtocolVersion();
