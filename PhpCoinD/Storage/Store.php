@@ -35,12 +35,12 @@ interface Store {
     /**
      * @param Block $bloc
      */
-    public function WriteBlock($bloc);
+    public function addBlock($bloc);
 
 
     /**
      * Add a Peer to the database
      * @param NetworkAddressTimestamp $networkAddressTimestamp
      */
-    public function WritePeer(NetworkAddressTimestamp $networkAddressTimestamp);
+    public function addPeer(NetworkAddressTimestamp $networkAddressTimestamp);
 } 

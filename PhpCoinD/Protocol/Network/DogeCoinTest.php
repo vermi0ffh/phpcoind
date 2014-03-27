@@ -1,11 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: ari
- * Date: 27/03/14
- * Time: 11:38
- */
-
 namespace PhpCoinD\Protocol\Network;
 
 

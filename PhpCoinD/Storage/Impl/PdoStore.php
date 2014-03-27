@@ -36,7 +36,7 @@ class PdoStore implements Store {
     /**
      * @param Block $bloc
      */
-    public function WriteBlock($bloc) {
+    public function addBlock($bloc) {
         // TODO: Implement WriteBlock() method.
     }
 
@@ -44,7 +44,7 @@ class PdoStore implements Store {
      * Add a Peer to the database
      * @param NetworkAddressTimestamp $networkAddressTimestamp
      */
-    public function WritePeer(NetworkAddressTimestamp $networkAddressTimestamp) {
+    public function addPeer(NetworkAddressTimestamp $networkAddressTimestamp) {
         // TODO: Implement WritePeer() method.
     }
 }
