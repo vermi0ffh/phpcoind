@@ -14,16 +14,6 @@ use PhpCoinD\Annotation\Serializable;
 use ReflectionProperty;
 
 class SerializableProperty extends ReflectionAnnotatedProperty {
-    /**
-     * Transform name of properties like this : test_property => TestProperty
-     * @param string $property_name
-     * @return string
-     */
-    protected function propertyNameTransformer($property_name) {
-        return str_replace(' ', '', ucwords(str_replace('_', ' ', $property_name)));
-    }
-
-
     public function __construct($class, $name) {
         parent::__construct($class, $name);
     }
@@ -35,7 +25,7 @@ class SerializableProperty extends ReflectionAnnotatedProperty {
      * @return mixed
      */
     public function getValue($object) {
-        $getValueFuncName = 'get' . $this->propertyNameTransformer($this->getName());
+        $getValueFuncName = 'get' . $this->propertyNameTransformed();
 
         // Call the getXXX method
         if (method_exists($object, $getValueFuncName)) {
@@ -68,13 +58,21 @@ class SerializableProperty extends ReflectionAnnotatedProperty {
     }
 
     /**
+     * Transform name of properties like this : test_property => TestProperty
+     * @return string
+     */
+    public function propertyNameTransformed() {
+        return str_replace(' ', '', ucwords(str_replace('_', ' ', $this->getName())));
+    }
+
+    /**
      * Set the value of a property of an object. If a method setPropertyName is present
      * this method is used. Else, the value is put directly.
      * @param object $object
      * @param mixed $value
      */
-    public function setValue( $object, $value) {
-        $setValueFuncName = 'set' . $this->propertyNameTransformer($this->getName());
+    public function setValue($object, $value) {
+        $setValueFuncName = 'set' . $this->propertyNameTransformed();
 
         // Call the getXXX method
         if (method_exists($object, $setValueFuncName)) {

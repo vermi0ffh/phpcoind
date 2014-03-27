@@ -1,14 +1,14 @@
 <?php
 namespace PhpCoinD\Protocol\Util\Impl;
-use Addendum\ReflectionAnnotatedClass;
+
 use Addendum\ReflectionAnnotatedMethod;
-use Addendum\ReflectionAnnotatedProperty;
 use Exception;
 use PhpCoinD\Annotation\MinVersion;
-use PhpCoinD\Annotation\Serializable;
+use PhpCoinD\Protocol\Util\Annotation\SerializableAnnotatedClass,
+    PhpCoinD\Protocol\Util\Annotation\SerializableProperty;
 use PhpCoinD\Protocol\Util\Serializer;
-use PhpCoinD\Exception\ClassNameFunctionNotDefined;
-use PhpCoinD\Exception\ClassNotFoundException;
+use PhpCoinD\Exception\ClassNameFunctionNotDefined,
+    PhpCoinD\Exception\ClassNotFoundException;
 
 
 /**
@@ -16,53 +16,6 @@ use PhpCoinD\Exception\ClassNotFoundException;
  * @package PhpCoinD\Protocol\Util
  */
 abstract class AnnotatorObjectSerializer implements Serializer {
-    /**
-     * Transform name of properties like this : test_property => TestProperty
-     * @param string $property_name
-     * @return string
-     */
-    protected function propertyNameTransformer($property_name) {
-        return str_replace(' ', '', ucwords(str_replace('_', ' ', $property_name)));
-    }
-
-    /**
-     * Get the value of a property of an object. If a method getPropertyName is present
-     * this method is used. Else, the value is taken directly.
-     * @param ReflectionAnnotatedProperty $property
-     * @param object $object
-     * @return mixed
-     */
-    protected function getValue($property, $object) {
-        $getValueFuncName = 'get' . $this->propertyNameTransformer($property->getName());
-
-        // Call the getXXX method
-        if (method_exists($object, $getValueFuncName)) {
-            return call_user_func(array($object, $getValueFuncName));
-        }
-
-        // Return value directly
-        return $property->getValue($object);
-    }
-
-    /**
-     * Set the value of a property of an object. If a method setPropertyName is present
-     * this method is used. Else, the value is put directly.
-     * @param ReflectionAnnotatedProperty $property
-     * @param object $object
-     * @param mixed $value
-     */
-    protected function setValue($property, $object, $value) {
-        $setValueFuncName = 'set' . $this->propertyNameTransformer($property->getName());
-
-        // Call the getXXX method
-        if (method_exists($object, $setValueFuncName)) {
-            call_user_func(array($object, $setValueFuncName), $value);
-        } else {
-            $property->setValue($object, $value);
-        }
-    }
-
-
     /**
      * Read an object with the Reader Functions
      * @param resource $stream
@@ -73,7 +26,7 @@ abstract class AnnotatorObjectSerializer implements Serializer {
      */
     public function read_object($stream, $class_name) {
         // Parse annotations on class
-        $reflection = new ReflectionAnnotatedClass($class_name);
+        $reflection = new SerializableAnnotatedClass($class_name);
 
         // Create a new instance of the given class
         $object = $reflection->newInstance();
@@ -100,28 +53,11 @@ abstract class AnnotatorObjectSerializer implements Serializer {
 
         /////////////////////////////////////////
         // Get all properties of the classe
-        $properties = $reflection->getProperties();
+        $properties = $reflection->getSerializableProperties();
 
-        /** @var $property ReflectionAnnotatedProperty */
+        /** @var $property SerializableProperty */
         foreach($properties as $property) {
-            $annotations = $property->getAllAnnotations();
-
-            /** @var $type_annotation Serializable */
-            $type_annotation = null;
-
-            // Parse all annotations to find a usable one
-            foreach($annotations as $annotation) {
-                if (is_a($annotation, 'PhpCoinD\Annotation\Serializable') ) {
-                    // We found it !
-                    $type_annotation = $annotation;
-                    break;
-                }
-            }
-
-            // We didn't found an annotation containing the type
-            if ($type_annotation == null) {
-                continue;
-            }
+            $type_annotation = $property->getSerializableAnnotation();
 
             /////////////////////////////////////
             // Check if this property is conditional
@@ -129,11 +65,9 @@ abstract class AnnotatorObjectSerializer implements Serializer {
                 /** @var $min_version_annotation MinVersion */
                 $min_version_annotation = $property->getAnnotation('PhpCoinD\Annotation\MinVersion');
 
-                /** @var $current_version_field ReflectionAnnotatedProperty */
                 try {
-                    $current_version_field = $reflection->getProperty($min_version_annotation->field);
                     // Get current value of the field
-                    $current_version = $this->getValue($current_version_field, $object);
+                    $current_version = $property->getValue($object);
 
                     // Skip the field, the version is not sufficient
                     if ($current_version < $min_version_annotation->min) {
@@ -153,7 +87,7 @@ abstract class AnnotatorObjectSerializer implements Serializer {
             if (!method_exists($this, 'read_' .$type)) {
                 if (interface_exists($type)) {
                     // We try to load an interface, we must find the correct class
-                    $get_class_name_func = 'get' . $this->propertyNameTransformer($property->getName()) . 'ClassName';
+                    $get_class_name_func = 'get' . $property->propertyNameTransformed() . 'ClassName';
 
                     if (!method_exists($object, $get_class_name_func)) {
                         // Can't get class name !
@@ -202,7 +136,7 @@ abstract class AnnotatorObjectSerializer implements Serializer {
             }
 
             // Set the value
-            $this->setValue($property, $object, $value);
+            $property->setValue($object, $value);
         }
 
         // Return the new instance
@@ -218,7 +152,7 @@ abstract class AnnotatorObjectSerializer implements Serializer {
      */
     public function write_object($stream, $object) {
         // Parse annotations on object
-        $reflection = new ReflectionAnnotatedClass($object);
+        $reflection = new SerializableAnnotatedClass($object);
 
         /////////////////////////////////////////
         // Find if serialization is handled by the object itself
@@ -242,33 +176,16 @@ abstract class AnnotatorObjectSerializer implements Serializer {
 
         /////////////////////////////////////////
         // Get all properties of the classe
-        $properties = $reflection->getProperties();
+        $properties = $reflection->getSerializableProperties();
 
-        /** @var $property ReflectionAnnotatedProperty */
+        /** @var $property SerializableProperty */
         foreach($properties as $property) {
-            $annotations = $property->getAllAnnotations();
-
-            /** @var $type_annotation Serializable */
-            $type_annotation = null;
-
-            // Parse all annotations to find a usable one
-            foreach($annotations as $annotation) {
-                if (is_a($annotation, 'PhpCoinD\Annotation\Serializable') ) {
-                    // We found it !
-                    $type_annotation = $annotation;
-                    break;
-                }
-            }
-
-            // We didn't found an annotation containing the type
-            if ($type_annotation == null) {
-                continue;
-            }
+            $type_annotation = $property->getSerializableAnnotation();
 
             /////////////////////////////////////
             // Get Serialized type
             $type = $type_annotation->type;
-            $value = $this->getValue($property, $object);
+            $value = $property->getValue($object);
 
             /////////////////////////////////////
             // Padding if needed
