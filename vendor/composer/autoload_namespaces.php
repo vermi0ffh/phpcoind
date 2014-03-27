@@ -7,6 +7,7 @@ $baseDir = dirname($vendorDir);
 
 return array(
     'Tests\\Addendum' => array($vendorDir . '/niktux/addendum'),
+    'Symfony\\Component\\Yaml\\' => array($vendorDir . '/symfony/yaml'),
     'Psr\\Log\\' => array($vendorDir . '/psr/log'),
     'Pleo' => array($vendorDir . '/pleonasm/merkle-tree/src'),
     'Monolog' => array($vendorDir . '/monolog/monolog/src'),
