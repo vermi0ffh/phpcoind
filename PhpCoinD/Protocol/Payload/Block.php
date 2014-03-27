@@ -29,11 +29,19 @@ class Block implements Payload {
      * @param \PhpCoinD\Protocol\Payload\Tx[] $tx
      */
     public function setTx($tx) {
+        // We use a DoubleSHA256 Hasher
         $hasher = new DSha256ChecksumComputer();
 
-        // TODO : Use the right hashing algorithm
-        $this->block_hash = new Hash($hasher->hash_sha256($hasher->hash_sha256(pack('V', $this->block_header->version))));
+        // Convert block header to raw string
+        $header_str = pack('V', $this->block_header->version)
+            . $this->block_header->prev_block->value
+            . $this->block_header->merkle_root->value
+            . pack('V', $this->block_header->timestamp)
+            . pack('V', $this->block_header->bits)
+            . pack('V', $this->block_header->nonce);
+
+        $this->block_hash = new Hash($hasher->hash($header_str));
 
         $this->tx = $tx;
     }
-} 
+}

@@ -30,4 +30,34 @@ class Tx implements Payload {
      * @var int
      */
     public $lock_time;
+
+
+    /**
+     * Add a new input transaction
+     * @param TxIn $tx_in
+     */
+    public function addTxIn($tx_in) {
+        // Init array if needed
+        if (!is_array($this->tx_in)) {
+            $this->tx_in = array();
+        }
+
+        // Add the new input transaction
+        $this->tx_in[] = $tx_in;
+    }
+
+
+    /**
+     * Add a new input transaction
+     * @param TxOut $tx_out
+     */
+    public function addTxOut($tx_out) {
+        // Init array if needed
+        if (!is_array($this->tx_out)) {
+            $this->tx_out = array();
+        }
+
+        // Add the new input transaction
+        $this->tx_out[] = $tx_out;
+    }
 } 
