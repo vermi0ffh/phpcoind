@@ -1,5 +1,6 @@
 <?php
 namespace PhpCoinD\Protocol;
+use PhpCoinD\Protocol\Component\Hash;
 use PhpCoinD\Protocol\Payload\Block;
 use PhpCoinD\Storage\Store;
 
@@ -23,7 +24,7 @@ interface Network {
 
     /**
      * The binary representation of the genesis block
-     * @return string
+     * @return Hash
      */
     public function getGenesisBlockHash();
 

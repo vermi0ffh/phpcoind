@@ -34,8 +34,11 @@ class NetworkSerializerTest extends PHPUnit_Framework_TestCase{
         $genesis_block_networkized = $this->network_transformer->read_object($stream, 'PhpCoinD\Protocol\Payload\Block');
         fclose($stream);
 
-        $this->assertTrue(get_class($genesis_block) == get_class($genesis_block_networkized));
+        // Test class
         $this->assertTrue($genesis_block_networkized instanceof Block);
+        $this->assertTrue(get_class($genesis_block) == get_class($genesis_block_networkized));
+
+        // Test computed hash
         $this->assertTrue($genesis_block->block_hash == $genesis_block_networkized->block_hash);
     }
 } 

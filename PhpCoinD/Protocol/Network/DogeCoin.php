@@ -81,10 +81,10 @@ class DogeCoin implements Network {
 
     /**
      * The binary representation of the genesis block
-     * @return string
+     * @return Hash
      */
     public function getGenesisBlockHash() {
-        return hex2bin('9156352c1818b32e90c9e792efd6a11a82fe7956a630f03bbee236cedae3911a');
+        return new Hash(hex2bin('9156352c1818b32e90c9e792efd6a11a82fe7956a630f03bbee236cedae3911a'));
     }
 
     /**

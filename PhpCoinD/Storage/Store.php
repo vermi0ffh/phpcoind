@@ -2,6 +2,7 @@
 namespace PhpCoinD\Storage;
 
 
+use PhpCoinD\Protocol\Component\Hash;
 use PhpCoinD\Protocol\Component\NetworkAddressTimestamp;
 use PhpCoinD\Protocol\Payload\Block;
 
@@ -10,6 +11,27 @@ use PhpCoinD\Protocol\Payload\Block;
  * @package PhpCoinD\Protocol\Storage
  */
 interface Store {
+    /**
+     * @param Block $bloc
+     */
+    public function addBlock($bloc);
+
+
+    /**
+     * Add a Peer to the database
+     * @param NetworkAddressTimestamp $networkAddressTimestamp
+     */
+    public function addPeer(NetworkAddressTimestamp $networkAddressTimestamp);
+
+
+    /**
+     * Compute the block locator for a bloc_id
+     * @param Hash $block_id
+     * @return Hash[]
+     */
+    public function blockLocator($block_id);
+
+
     /**
      * This method initialize the store. Creatre tables, etc...
      */
@@ -30,17 +52,4 @@ interface Store {
      * @return NetworkAddressTimestamp[]
      */
     public function readPeers($skip = 0, $size = 10);
-
-
-    /**
-     * @param Block $bloc
-     */
-    public function addBlock($bloc);
-
-
-    /**
-     * Add a Peer to the database
-     * @param NetworkAddressTimestamp $networkAddressTimestamp
-     */
-    public function addPeer(NetworkAddressTimestamp $networkAddressTimestamp);
 } 

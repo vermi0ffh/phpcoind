@@ -387,7 +387,6 @@ class CoinPeer implements Peer {
      * @throws \PhpCoinD\Exception\PeerNotReadyException
      */
     public function writePacket($packet) {
-
         // Until version exchange is done, we can't then anything else than version and verack
         if ( $this->_version_sent != 2 && !in_array($packet->header->command, array('version', 'verack'))) {
             throw new PeerNotReadyException();

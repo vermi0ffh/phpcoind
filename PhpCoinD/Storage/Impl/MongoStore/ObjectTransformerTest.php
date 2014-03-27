@@ -29,8 +29,11 @@ class ObjectTransformerTest extends PHPUnit_Framework_TestCase {
 
         $genesis_block_mongoed = $this->object_transformer->fromMongo($this->object_transformer->toMongo($genesis_block));
 
-        $this->assertTrue(get_class($genesis_block) == get_class($genesis_block_mongoed));
+        // Test class
         $this->assertTrue($genesis_block_mongoed instanceof Block);
+        $this->assertTrue(get_class($genesis_block) == get_class($genesis_block_mongoed));
+
+        // Test computed hash
         $this->assertTrue($genesis_block->block_hash == $genesis_block_mongoed->block_hash);
     }
 } 

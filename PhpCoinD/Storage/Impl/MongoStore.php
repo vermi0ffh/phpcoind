@@ -5,6 +5,7 @@ namespace PhpCoinD\Storage\Impl;
 
 use MongoClient;
 use MongoDB;
+use PhpCoinD\Protocol\Component\Hash;
 use PhpCoinD\Protocol\Component\NetworkAddressTimestamp;
 use PhpCoinD\Protocol\Network;
 use PhpCoinD\Protocol\Payload\Block;
@@ -50,6 +51,52 @@ class MongoStore implements Store {
         $this->_object_transformer = new ObjectTransformer();
     }
 
+
+    /**
+     * @param Block $bloc
+     */
+    public function addBlock($bloc) {
+        $mongo_block = $this->_object_transformer->toMongo($bloc);
+        $mongo_block['_id'] = bin2hex($bloc->block_hash->value);
+
+        $this->getMongoDb()->selectCollection(self::BLOCK_COLLECTION)
+            ->insert($mongo_block);
+    }
+
+    /**
+     * Add a Peer to the database
+     * @param NetworkAddressTimestamp $networkAddressTimestamp
+     */
+    public function addPeer(NetworkAddressTimestamp $networkAddressTimestamp) {
+        // TODO: Implement WritePeer() method.
+    }
+
+
+    /**
+     * Compute the block locator for a bloc_id
+     * @param Hash $block_id
+     * @return Hash[]
+     */
+    public function blockLocator($block_id) {
+        $ret = array();
+
+        $block = $this->readBlock($block_id);
+        if ($block != null) {
+            $ret[] = $block->block_hash;
+        }
+
+        return $ret;
+    }
+
+
+    /**
+     * @return \MongoDB
+     */
+    public function getMongoDb() {
+        return $this->_mongo_db;
+    }
+
+
     /**
      * This method initialize the store. Creatre tables, etc...
      */
@@ -64,15 +111,21 @@ class MongoStore implements Store {
 
     /**
      * Read a block from the database
-     * @param string $block_id
+     * @param Hash $block_id
      * @return Block|null
      */
     public function readBlock($block_id) {
         $block = $this->getMongoDb()->selectCollection(self::BLOCK_COLLECTION)
             ->findOne(array(
-                '_id' => bin2hex($this->getNetwork()->getGenesisBlockHash()),
+                '_id' => bin2hex($block_id->value),
             ));
 
+        // No block found
+        if ($block == null) {
+            return null;
+        }
+
+        // Get the object back from the mongo object
         return $this->_object_transformer->fromMongo($block);
     }
 
@@ -86,31 +139,6 @@ class MongoStore implements Store {
         // TODO: Implement ReadPeers() method.
     }
 
-    /**
-     * @param Block $bloc
-     */
-    public function addBlock($bloc) {
-        $mongo_block = $this->_object_transformer->toMongo($bloc);
-        $mongo_block->_id = bin2hex($bloc->block_hash->value);
-
-        $this->getMongoDb()->selectCollection(self::BLOCK_COLLECTION)
-            ->insert($mongo_block);
-    }
-
-    /**
-     * Add a Peer to the database
-     * @param NetworkAddressTimestamp $networkAddressTimestamp
-     */
-    public function addPeer(NetworkAddressTimestamp $networkAddressTimestamp) {
-        // TODO: Implement WritePeer() method.
-    }
-
-    /**
-     * @return \MongoDB
-     */
-    public function getMongoDb() {
-        return $this->_mongo_db;
-    }
 
     /**
      * @return \PhpCoinD\Protocol\Network

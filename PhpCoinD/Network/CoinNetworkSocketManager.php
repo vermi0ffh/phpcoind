@@ -5,11 +5,10 @@ use Exception;
 use Monolog\Logger;
 use PhpCoinD\Exception\PeerNotReadyException;
 use PhpCoinD\Protocol\Component\Hash;
-use PhpCoinD\Protocol\Component\InvVect;
 use PhpCoinD\Protocol\Network;
 use PhpCoinD\Network\Peer\CoinPeer;
 use PhpCoinD\Protocol\Packet;
-use PhpCoinD\Protocol\Payload\GetData;
+use PhpCoinD\Protocol\Payload\GetHeaders;
 
 
 /**
@@ -130,22 +129,15 @@ class CoinNetworkSocketManager {
             $this->getLogger()->addInfo("First sync with the network");
 
             // Get headers from the genesis block
-            $getblock_packet = $this->createPacket('getdata');
-            $getblock_packet->payload = new GetData();
-            $getblock_packet->payload->inventory = array();
-            $inv_vect = new InvVect();
-            $inv_vect->hash = new Hash($this->getNetwork()->getGenesisBlockHash());
-            $inv_vect->type = InvVect::OBJECT_MSG_BLOCK;
-            $getblock_packet->payload->inventory[] = $inv_vect;
-/*            $getblock_packet->payload->version = $this->getNetwork()->getProtocolVersion();
-            $getblock_packet->payload->block_locator_hashes = array(
-                new Hash($this->getNetwork()->getGenesisBlock()),
-                //new Hash(hex2bin('98bbc4d809b42375a2627b174be7a8b360f8e172e5c5d1d7c395c30b38db7e33')),
-            );
-            $getblock_packet->payload->hash_stop = new Hash(hex2bin('00000000000000000000000000000000'));*/
+            $getheaders_packet = $this->createPacket('getheaders');
+            $getheaders_packet->payload = new GetHeaders();
+            $getheaders_packet->payload->version = $this->getNetwork()->getProtocolVersion();
+            $getheaders_packet->payload->block_locator_hashes = $this->getNetwork()->getStore()->blockLocator($this->getNetwork()->getGenesisBlockHash());
+            $getheaders_packet->payload->hash_stop = new Hash(hex2bin('3a4d13c36ea8b9e4e8518bbd781540efc9d26a95ef8475e82262a439efc34484'));
+
 
             // Send the packet
-            $this->sendPacket($getblock_packet);
+            $this->sendPacket($getheaders_packet);
         }
     }
 
