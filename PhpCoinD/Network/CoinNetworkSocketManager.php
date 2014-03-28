@@ -5,9 +5,18 @@ use Exception;
 use Monolog\Logger;
 use PhpCoinD\Exception\PeerNotReadyException;
 use PhpCoinD\Protocol\Component\Hash;
+use PhpCoinD\Protocol\Component\InvVect;
 use PhpCoinD\Protocol\Network;
 use PhpCoinD\Network\Peer\CoinPeer;
 use PhpCoinD\Protocol\Packet;
+use PhpCoinD\Protocol\Payload\Addr,
+    PhpCoinD\Protocol\Payload\Alert,
+    PhpCoinD\Protocol\Payload\Block,
+    PhpCoinD\Protocol\Payload\Headers,
+    PhpCoinD\Protocol\Payload\Inv,
+    PhpCoinD\Protocol\Payload\NotFound;
+use PhpCoinD\Protocol\Payload\GetBlocks;
+use PhpCoinD\Protocol\Payload\GetData;
 use PhpCoinD\Protocol\Payload\GetHeaders;
 
 
@@ -53,6 +62,26 @@ class CoinNetworkSocketManager {
 
 
     /**
+     * A flag telling if the blockchain is syncing
+     * @var bool
+     */
+    protected $_is_syncing = false;
+
+
+    /**
+     * A list of Hashes of Blocks we need to download
+     * @var Hash[]
+     */
+    protected $_waiting_block_list;
+
+    /**
+     * The hash of the block being loaded from the network
+     * @var Hash[]
+     */
+    protected $_loading_blocks;
+
+
+    /**
      * @param Network $network
      * @param Logger $logger
      * @param array $binds
@@ -64,6 +93,9 @@ class CoinNetworkSocketManager {
 
         // Prevent the system from launching timed actions too early
         $this->_last_timed_action = time();
+        // Empty list
+        $this->_waiting_block_list = array();
+        $this->_loading_blocks = array();
     }
 
 
@@ -105,6 +137,10 @@ class CoinNetworkSocketManager {
         $packet->header->magic = $this->getNetwork()->getMagicValue();
         $packet->header->command = $command;
 
+        // Init payhload
+        $payload_class = $packet->getPayloadClassName();
+        $packet->payload = new $payload_class;
+
         return $packet;
     }
 
@@ -113,8 +149,8 @@ class CoinNetworkSocketManager {
      * Launch time actions
      */
     public function doTimedActions() {
-        // Lanch timed actions every 5 seconds max
-        if (time() - $this->_last_timed_action < 5) {
+        // Lanch timed actions every seconds max
+        if (time() - $this->_last_timed_action < 1) {
             return;
         }
 
@@ -124,21 +160,83 @@ class CoinNetworkSocketManager {
         $this->_last_timed_action = time();
 
         /////////////////////////////////////////
-        // First init
-        if ($this->getNetwork()->getHeight() == 0) {
-            $this->getLogger()->addInfo("First sync with the network");
-
-            // Get headers from the genesis block
-            $getheaders_packet = $this->createPacket('getheaders');
-            $getheaders_packet->payload = new GetHeaders();
-            $getheaders_packet->payload->version = $this->getNetwork()->getProtocolVersion();
-            $getheaders_packet->payload->block_locator_hashes = $this->getNetwork()->getStore()->blockLocator($this->getNetwork()->getGenesisBlockHash());
-            $getheaders_packet->payload->hash_stop = new Hash(hex2bin('3a4d13c36ea8b9e4e8518bbd781540efc9d26a95ef8475e82262a439efc34484'));
-
-
-            // Send the packet
-            $this->sendPacket($getheaders_packet);
+        // Blockchain synchronization
+        $current_peers_max_height = 0;
+        foreach($this->getPeers() as $peer) {
+            $current_peers_max_height = max($current_peers_max_height, $peer->getHeight());
         }
+
+        if ($this->getNetwork()->getHeight() < $current_peers_max_height && !$this->_is_syncing) {
+            $this->getLogger()->addInfo("Sync with the network");
+            $this->_is_syncing = true;
+
+            /////////////////////////////////////
+            // Display last received block
+            $last_block = $this->getNetwork()->getStore()->getLastBlock();
+            $this->getLogger()->addDebug('Last block ('.bin2hex($last_block->block_hash->value).'). timestamp = ' . date('Y-m-d H:i:s', $last_block->block_header->timestamp));
+
+            /////////////////////////////////////
+            // Sync using checkpoints
+            $hash_check_point = $this->getNetwork()->getNextCheckPoint();
+
+            if ($hash_check_point != null) {
+                // Get headers from the genesis block
+                $getheaders_packet = $this->createPacket('getheaders');
+                if ($getheaders_packet->payload instanceof GetHeaders) {
+                    $getheaders_packet->payload->version = $this->getNetwork()->getProtocolVersion();
+                    $getheaders_packet->payload->block_locator_hashes = $this->getNetwork()->getStore()->blockLocator($this->getNetwork()->getLastBlockHash());
+                    $getheaders_packet->payload->hash_stop = $hash_check_point;
+
+                    // Send the packet
+                    $this->sendPacket($getheaders_packet);
+                }
+            } else {
+                // Sync using a slower but safer way after checkpoints
+
+                // Get headers from the genesis block
+                $getblocks_packet = $this->createPacket('getblocks');
+
+                if ($getblocks_packet->payload instanceof GetBlocks) {
+                    $getblocks_packet->payload->version = $this->getNetwork()->getProtocolVersion();
+                    $getblocks_packet->payload->block_locator_hashes = $this->getNetwork()->getStore()->blockLocator($this->getNetwork()->getLastBlockHash());
+                    $getblocks_packet->payload->hash_stop = new Hash(hex2bin('0000000000000000000000000000000000000000000000000000000000000000'));
+
+                    // Send the packet
+                    $this->sendPacket($getblocks_packet);
+                }
+            }
+        }
+
+        /////////////////////////////////////////
+        // Download waiting blocks
+        if (count($this->_loading_blocks) == 0 && count($this->_waiting_block_list) > 0) {
+            $getdata_packet = $this->createPacket('getdata');
+            if ($getdata_packet->payload instanceof GetData) {
+
+                for($i=0; $i<count($this->_waiting_block_list) && $i < 10; $i++) {
+                    // Prepare an inv_vect to load the block from the network
+                    $inv_vect = new InvVect();
+                    $inv_vect->type = InvVect::OBJECT_MSG_BLOCK;
+                    $inv_vect->hash = $this->_waiting_block_list[0];
+
+                    // We need this block
+                    $getdata_packet->payload->inventory[] = $inv_vect;
+
+                    $this->sendPacket($getdata_packet);
+
+                    // Add hash to currently loading blocks
+                    $this->_loading_blocks[] = $this->_waiting_block_list[0];
+
+                    // Remove the block from the waiting queue
+                    $this->_waiting_block_list = array_slice($this->_waiting_block_list, 1);
+                }
+            }
+        }
+
+
+        /////////////////////////////////////////
+        // Connect more peers
+        // TODO : Add code here
     }
 
     /**
@@ -174,6 +272,120 @@ class CoinNetworkSocketManager {
      */
     public function getServerSockets() {
         return $this->_server_sockets;
+    }
+
+    /**
+     * @return boolean
+     */
+    public function isSyncing() {
+        return $this->_is_syncing;
+    }
+
+    /**
+     * Callback when a packet is received (after peer level processing !)
+     * @param Packet $packet
+     */
+    public function onPacket($packet) {
+        switch($packet->header->command) {
+            case 'addr':
+                if ($packet->payload instanceof Addr) {
+                    foreach($packet->payload->addr_list as $addr) {
+                        $this->getLogger()->addInfo("A new client is available : " . $addr->network_address->getParsedIp() . ':' . $addr->network_address->port);
+                    }
+                }
+                break;
+
+            case 'alert':
+                // Alert packet : an important message. We log it !
+                if ($packet->payload instanceof Alert) {
+                    // Get current protocol version
+                    $version = $this->getNetwork()->getProtocolVersion();
+
+                    // If needed, display message !
+                    if ($version >= $packet->payload->getAlertDetail()->min_ver
+                        && $version <= $packet->payload->getAlertDetail()->max_ver
+                        && $packet->payload->getAlertDetail()->expiration < time()) {
+                        // Message is for us ! Let's log it
+                        $this->getLogger()->addAlert($packet->payload->getAlertDetail()->status_bar);
+                    }
+                }
+                break;
+
+            case 'block':
+                // Alert packet : an important message. We log it !
+                if ($packet->payload instanceof Block) {
+                    for($i=0; $i<count($this->_loading_blocks); $i++) {
+                        if ($this->_loading_blocks[$i]->value == $packet->payload->block_hash->value) {
+                            // We are expecting this block
+                            unset($this->_loading_blocks[$i]);
+                            // Add the block to the block chain
+                            $this->getNetwork()->getStore()->addBlock($packet->payload);
+
+                            $this->getLogger()->addAlert('Block received ! Hash : ' . bin2hex($packet->payload->block_hash->value) );
+                            $this->getLogger()->addAlert('Block # transactions : ' . count($packet->payload->tx) );
+                        }
+                    }
+
+                    // Pack the array
+                    $this->_loading_blocks = array_values($this->_loading_blocks);
+                }
+                break;
+
+            case 'headers':
+                if ($packet->payload instanceof Headers && $this->isSyncing()) {
+                    // A new list of headers have arrived
+                    $this->getLogger()->addInfo("Headers received for " . count($packet->payload->block_header) . ' blocks');
+
+                    // For each block, compute the block hash and ask for full block data
+                    foreach($packet->payload->block_header as $block_header) {
+                        //$this->getLogger()->addInfo("Block hash : " . bin2hex($block_header->block_hash->value));
+                        // Add the new block to the chain
+                        $this->getNetwork()->getStore()->addBlock($block_header);
+                    }
+
+                    // Send the getdata packet
+                    $this->_is_syncing = false;
+                }
+                break;
+
+            case 'inv':
+                if ($packet->payload instanceof Inv) {
+                    foreach($packet->payload->inventory as $inv_vect) {
+                        /////////////////
+                        // Set a getdata message to retrive the block
+                        switch($inv_vect->type) {
+                                case InvVect::OBJECT_ERROR:
+                                    $type = 'Error';
+                                    break;
+                                case InvVect::OBJECT_MSG_BLOCK:
+                                    $type = 'Block';
+                                    $this->_waiting_block_list[] = $inv_vect->hash;
+                                    break;
+                                case InvVect::OBJECT_MSG_TX:
+                                    $type = 'Tx';
+                                    break;
+
+                                default:
+                                    $type = 'Unknown';
+                            }
+
+                            $this->getLogger()->addInfo("A new object is present of type : " . $type . '. Hash is ' . bin2hex($inv_vect->hash->value));
+                    }
+                }
+                break;
+
+            case 'notfound':
+                if ($packet->payload instanceof NotFound) {
+                    foreach($packet->payload->inventory as $vect) {
+                        $type = $vect->type == InvVect::OBJECT_MSG_BLOCK ? 'Block' : 'Tx';
+                        $this->getLogger()->addInfo($type . ' not found ! Hash : ' . bin2hex($vect->hash->value) );
+                    }
+                }
+                break;
+
+            default:
+                $this->getLogger()->addAlert('Packet unknown : ' . $packet->header->command);
+        }
     }
 
     /**
@@ -242,4 +454,4 @@ class CoinNetworkSocketManager {
             $peer->getSocket()->close();
         }
     }
-} 
+}

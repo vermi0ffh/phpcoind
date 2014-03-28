@@ -37,10 +37,24 @@ interface Network {
 
 
     /**
+     * Return the Hash of the last block received
+     * @return Hash
+     */
+    public function getLastBlockHash();
+
+
+    /**
      * The magic value for packet header
      * @return int
      */
     public function getMagicValue();
+
+
+    /**
+     * Return the hash of the next checkpoint (if possible)
+     * @return Hash
+     */
+    public function getNextCheckPoint();
 
 
     /**

@@ -36,13 +36,14 @@ class DogeCoin implements Network {
     public function createGenesisBlock() {
         // Create the genesis block
         $genesis_block = new Block();
-        $genesis_block->block_header = new BlockHeaderShort();
-        $genesis_block->block_header->version = 1;
-        $genesis_block->block_header->prev_block = new Hash(hex2bin('0000000000000000000000000000000000000000000000000000000000000000'));
-        $genesis_block->block_header->merkle_root = new Hash(hex2bin('696ad20e2dd4365c7459b4a4a5af743d5e92c6da3229e6532cd605f6533f2a5b'));
-        $genesis_block->block_header->timestamp = 1386325540;
-        $genesis_block->block_header->bits = 0x1e0ffff0;
-        $genesis_block->block_header->nonce = 99943;
+        $block_header = new BlockHeaderShort();
+        $block_header->version = 1;
+        $block_header->prev_block = new Hash(hex2bin('0000000000000000000000000000000000000000000000000000000000000000'));
+        $block_header->merkle_root = new Hash(hex2bin('696ad20e2dd4365c7459b4a4a5af743d5e92c6da3229e6532cd605f6533f2a5b'));
+        $block_header->timestamp = 1386325540;
+        $block_header->bits = 0x1e0ffff0;
+        $block_header->nonce = 99943;
+        $genesis_block->setBlockHeader($block_header);
 
         // Transaction
         $tx = new Tx();
@@ -66,7 +67,7 @@ class DogeCoin implements Network {
         $tx->lock_time = 0;
 
         // Add 1 transaction
-        $genesis_block->setTx(array($tx));
+        $genesis_block->tx = array($tx);
 
         return $genesis_block;
     }
@@ -92,7 +93,15 @@ class DogeCoin implements Network {
      * @return int
      */
     public function getHeight() {
-        return 0;
+        return $this->getStore()->countBlocks();
+    }
+
+    /**
+     * Return the Hash of the last block received
+     * @return Hash
+     */
+    public function getLastBlockHash() {
+        return $this->getStore()->getLastBlock()->block_hash;
     }
 
     /**
@@ -101,6 +110,25 @@ class DogeCoin implements Network {
      */
     public function getMagicValue() {
         return 0xc0c0c0c0;
+    }
+
+    /**
+     * Return the hash of the next checkpoint (if possible)
+     * @return Hash
+     */
+    public function getNextCheckPoint() {
+        if ($this->getHeight() == 0) {
+            return $this->getGenesisBlockHash();
+        } else if ($this->getHeight() <= 42279) {
+            return new Hash(hex2bin('3a4d13c36ea8b9e4e8518bbd781540efc9d26a95ef8475e82262a439efc34484'));
+        } else if ($this->getHeight() <= 42400) {
+            return new Hash(hex2bin('b45272501fb44274161970af94c3bdc01f7cdffd1c36f9a6d4e6d97ec1b77b55'));
+        } else if ($this->getHeight() <= 104679) {
+            return new Hash(hex2bin('cf011d9acec80607c1cf61128eb01ecb767b57398cec8f89984bd490ae87eb35'));
+        }
+
+        // No more checkpoints !
+        return null;
     }
 
     /**

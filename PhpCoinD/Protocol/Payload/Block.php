@@ -1,10 +1,10 @@
 <?php
 namespace PhpCoinD\Protocol\Payload;
 
+use PhpCoinD\Protocol\Component\BlockHeader;
 use PhpCoinD\Protocol\Component\Hash;
 use PhpCoinD\Protocol\Packet\Payload;
 use PhpCoinD\Protocol\Component\BlockHeaderShort;
-use PhpCoinD\Protocol\Util\Impl\DSha256ChecksumComputer;
 
 class Block implements Payload {
     /**
@@ -25,23 +25,37 @@ class Block implements Payload {
     public $block_hash;
 
     /**
-     * This method is a trick to compute the block hash
-     * @param \PhpCoinD\Protocol\Payload\Tx[] $tx
+     * Compute block hash
+     * @param \PhpCoinD\Protocol\Component\BlockHeaderShort $block_header
      */
-    public function setTx($tx) {
-        // We use a DoubleSHA256 Hasher
-        $hasher = new DSha256ChecksumComputer();
+    public function setBlockHeader($block_header) {
+        $this->block_header = $block_header;
 
-        // Convert block header to raw string
-        $header_str = pack('V', $this->block_header->version)
-            . $this->block_header->prev_block->value
-            . $this->block_header->merkle_root->value
-            . pack('V', $this->block_header->timestamp)
-            . pack('V', $this->block_header->bits)
-            . pack('V', $this->block_header->nonce);
+        $this->block_hash = $this->block_header->computeBlockHash();
+    }
 
-        $this->block_hash = new Hash($hasher->hash($header_str));
 
-        $this->tx = $tx;
+    /**
+     * Build a Block object containing only a block header
+     * @param BlockHeader $block_header
+     * @return \PhpCoinD\Protocol\Payload\Block
+     */
+    public static function fromBlockHeader($block_header) {
+        // Create the new Block object
+        $ret = new self();
+
+        // Prepare new header for this block
+        $block_header_short = new BlockHeaderShort();
+        $block_header_short->version = $block_header->version;
+        $block_header_short->prev_block = $block_header->prev_block;
+        $block_header_short->merkle_root = $block_header->merkle_root;
+        $block_header_short->timestamp = $block_header->timestamp;
+        $block_header_short->bits = $block_header->bits;
+        $block_header_short->nonce = $block_header->nonce;
+
+        // Set the block header
+        $ret->setBlockHeader($block_header_short);
+
+        return $ret;
     }
 }

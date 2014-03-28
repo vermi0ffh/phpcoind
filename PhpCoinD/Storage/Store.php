@@ -33,7 +33,21 @@ interface Store {
 
 
     /**
-     * This method initialize the store. Creatre tables, etc...
+     * Get the number of blocks stored
+     * @return int
+     */
+    public function countBlocks();
+
+
+    /**
+     * Return the last block received
+     * @return Block
+     */
+    public function getLastBlock();
+
+
+    /**
+     * This method initialize the store. Creatre tables, load caches, insert genesis block, etc...
      */
     public function initializeStore();
 

@@ -6,17 +6,11 @@ use Aza\Components\Socket\SocketStream;
 use Exception;
 use Monolog\Logger;
 use PhpCoinD\Exception\PeerNotReadyException;
-use PhpCoinD\Protocol\Component\InvVect;
 use PhpCoinD\Protocol\Component\NetworkAddress;
 use PhpCoinD\Protocol\Network;
 use PhpCoinD\Protocol\Packet;
-use PhpCoinD\Protocol\Payload\Addr;
-use PhpCoinD\Protocol\Payload\Alert;
-use PhpCoinD\Protocol\Payload\Block;
-use PhpCoinD\Protocol\Payload\Headers;
-use PhpCoinD\Protocol\Payload\Inv;
-use PhpCoinD\Protocol\Payload\Version;
-use PhpCoinD\Protocol\Payload\Void;
+use PhpCoinD\Protocol\Payload\Version,
+    PhpCoinD\Protocol\Payload\Void;
 use PhpCoinD\Protocol\Util\Impl\NetworkSerializer;
 use PhpCoinD\Exception\StreamException;
 use PhpCoinD\Network\CoinNetworkSocketManager,
@@ -24,6 +18,11 @@ use PhpCoinD\Network\CoinNetworkSocketManager,
     PhpCoinD\Network\Peer;
 
 class CoinPeer implements Peer {
+    /**
+     * 1 Mb recv buffer size
+     */
+    const MAX_RECV_BUFFER_SIZE = 1048576;
+
     /**
      * @var CoinNetworkSocketManager
      */
@@ -86,6 +85,13 @@ class CoinPeer implements Peer {
      * @var int
      */
     protected $_version_sent = 0;
+
+
+    /**
+     * The version payload of the remote peer
+     * @var Version
+     */
+    protected $_peer_version;
 
 
 
@@ -155,6 +161,18 @@ class CoinPeer implements Peer {
     }
 
     /**
+     * Return the height of the peer (given in the version message)
+     * @return int
+     */
+    public function getHeight() {
+        if ($this->_peer_version != null && $this->_peer_version instanceof Version) {
+            return $this->_peer_version->start_height;
+        }
+
+        return 0;
+    }
+
+    /**
      * @return \PhpCoinD\Network\ConnectionEndPoint
      */
     public function getLocalEndPoint() {
@@ -203,69 +221,6 @@ class CoinPeer implements Peer {
      */
     public function onPacket($packet) {
         switch($packet->header->command) {
-            case 'addr':
-                if ($packet->payload instanceof Addr) {
-                    foreach($packet->payload->addr_list as $addr) {
-                        $this->getLogger()->addInfo("A new client is available : " . $addr->network_address->getParsedIp() . ':' . $addr->network_address->port);
-                    }
-                }
-                break;
-
-            case 'alert':
-                // Alert packet : an important message. We log it !
-                if ($packet->payload instanceof Alert) {
-                    // Get current protocol version
-                    $version = $this->getCoinNetworkSocketmanager()->getNetwork()->getProtocolVersion();
-
-                    // If needed, display message !
-                    if ($version >= $packet->payload->getAlertDetail()->min_ver
-                        && $version <= $packet->payload->getAlertDetail()->max_ver
-                        && $packet->payload->getAlertDetail()->expiration < time()) {
-                        // Message is for us ! Let's log it
-                        $this->getLogger()->addAlert($packet->payload->getAlertDetail()->status_bar);
-                    }
-                }
-                break;
-
-            case 'block':
-                // Alert packet : an important message. We log it !
-                if ($packet->payload instanceof Block) {
-                    $this->getLogger()->addAlert('Block received ! Merkle Root : ' . bin2hex($packet->payload->block_header->merkle_root->value) );
-                    $this->getLogger()->addAlert('Block # transactions : ' . count($packet->payload->tx) );
-                }
-                break;
-
-            case 'headers':
-                if ($packet->payload instanceof Headers) {
-                    $this->getLogger()->addInfo("Headers received for " . count($packet->payload->block_header) . ' blocks');
-                    foreach($packet->payload->block_header as $block_header) {
-                        $this->getLogger()->addInfo("Received header for block : " . bin2hex($block_header->merkle_root->value));
-                    }
-                }
-                break;
-
-            case 'inv':
-                if ($packet->payload instanceof Inv) {
-                    foreach($packet->payload->inventory as $inv_vect) {
-                        switch($inv_vect->type) {
-                            case InvVect::OBJECT_ERROR:
-                                $type = 'Error';
-                                break;
-                            case InvVect::OBJECT_MSG_BLOCK:
-                                $type = 'Block';
-                                break;
-                            case InvVect::OBJECT_MSG_TX:
-                                $type = 'Tx';
-                                break;
-
-                            default:
-                                $type = 'Unknown';
-                        }
-                        $this->getLogger()->addInfo("A new object is present of type : " . $type . '. Hash is ' . bin2hex($inv_vect->hash->value));
-                    }
-                }
-                break;
-
             case 'version':
                 if ($this->_version_received > 0) {
                     $this->getLogger()->addWarning("version packet already received once !");
@@ -285,6 +240,9 @@ class CoinPeer implements Peer {
                 if ($this->_version_sent == 0) {
                     $this->sendVersion();
                 }
+
+                // Store the peer version payload
+                $this->_peer_version = $packet->payload;
                 break;
 
             case 'verack':
@@ -296,7 +254,8 @@ class CoinPeer implements Peer {
                 break;
 
             default:
-                $this->getLogger()->addAlert('Packet unknown : ' . $packet->header->command);
+                // Forward packet to the network manager
+                $this->getCoinNetworkSocketmanager()->onPacket($packet);
         }
     }
 
@@ -305,7 +264,7 @@ class CoinPeer implements Peer {
      */
     public function onRead() {
         // Read data from the socket
-        $data = $this->getSocket()->read();
+        $data = $this->getSocket()->read(self::MAX_RECV_BUFFER_SIZE - strlen($this->_recv_buffer));
 
         // Nothing read ? We have nothing to do then...
         if (is_string($data) && strlen($data) == 0) {
@@ -378,7 +337,7 @@ class CoinPeer implements Peer {
             $version_packet->payload->addr_from = NetworkAddress::fromString($this->getRemoteEndPoint()->address, $this->getRemoteEndPoint()->port);
             $version_packet->payload->nonce = $this->getCoinNetworkSocketmanager()->getNetwork()->getNonce();
             $version_packet->payload->user_agent = "CoinPHPd";
-            $version_packet->payload->start_height = 1;
+            $version_packet->payload->start_height = $this->getCoinNetworkSocketmanager()->getNetwork()->getHeight();
 
             // Write the version packet to the socket
             $this->writePacket($version_packet);

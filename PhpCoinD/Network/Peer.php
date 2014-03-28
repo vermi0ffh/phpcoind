@@ -27,4 +27,11 @@ interface Peer extends AsyncSocket {
      * @param Packet $packet
      */
     public function onPacket($packet);
+
+
+    /**
+     * Return the height of the peer (given in the version message)
+     * @return int
+     */
+    public function getHeight();
 } 

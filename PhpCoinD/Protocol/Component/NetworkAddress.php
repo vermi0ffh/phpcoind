@@ -102,7 +102,7 @@ class NetworkAddress {
 
             // IPv6 default format : 8 groups of 2 bytes, hexadecimal
             while(strlen($raw) > 0) {
-                $ret[] = pack('H*', substr($raw, 0, 2));
+                $ret[] = bin2hex(substr($raw, 0, 2));
                 $raw = substr($raw, 2);
             }
 

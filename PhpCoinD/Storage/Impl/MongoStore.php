@@ -4,6 +4,7 @@ namespace PhpCoinD\Storage\Impl;
 
 
 use MongoClient;
+use MongoCursorException;
 use MongoDB;
 use PhpCoinD\Protocol\Component\Hash;
 use PhpCoinD\Protocol\Component\NetworkAddressTimestamp;
@@ -56,11 +57,19 @@ class MongoStore implements Store {
      * @param Block $bloc
      */
     public function addBlock($bloc) {
+        if ($bloc == null) {
+            return;
+        }
+
         $mongo_block = $this->_object_transformer->toMongo($bloc);
         $mongo_block['_id'] = bin2hex($bloc->block_hash->value);
 
-        $this->getMongoDb()->selectCollection(self::BLOCK_COLLECTION)
-            ->insert($mongo_block);
+        try {
+            $this->getMongoDb()->selectCollection(self::BLOCK_COLLECTION)
+                ->insert($mongo_block);
+        } catch (MongoCursorException $e) {
+            /* Block is already in the store ! Just skip the insert part */
+        }
     }
 
     /**
@@ -85,7 +94,45 @@ class MongoStore implements Store {
             $ret[] = $block->block_hash;
         }
 
+        // Add previous block
+        if ($block->block_header->prev_block->value != hex2bin('0000000000000000000000000000000000000000000000000000000000000000')) {
+            $ret[] = $block->block_header->prev_block;
+        }
+
+        // Add genesis block hash at the end
+        $ret[] = $this->getNetwork()->getGenesisBlockHash();
+
         return $ret;
+    }
+
+
+    /**
+     * Get the number of blocks stored
+     * @return int
+     */
+    public function countBlocks() {
+        return $this->getMongoDb()->selectCollection(self::BLOCK_COLLECTION)
+            ->count();
+    }
+
+
+    /**
+     * Return the last block received
+     * @return Block
+     */
+    public function getLastBlock() {
+        $block = $this->getMongoDb()->selectCollection(self::BLOCK_COLLECTION)
+            ->find()
+            ->sort(array('block_header.timestamp' => -1))
+            ->getNext();
+
+        // No block found
+        if ($block == null) {
+            return null;
+        }
+
+        // Get the object back from the mongo object
+        return $this->_object_transformer->fromMongo($block);
     }
 
 
@@ -107,6 +154,15 @@ class MongoStore implements Store {
         if ($genesis_block == null) {
             $this->addBlock($this->getNetwork()->createGenesisBlock());
         }
+
+        /////////////////////////////////////////
+        // Indexes
+        // Index timestamp of blocks
+        $this->getMongoDb()->selectCollection(self::BLOCK_COLLECTION)
+            ->ensureIndex(array('block_header.timestamp' => -1));
+        // Index transaction (to find empty blocks quickly)
+        $this->getMongoDb()->selectCollection(self::BLOCK_COLLECTION)
+            ->ensureIndex(array('tx' => 1));
     }
 
     /**

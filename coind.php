@@ -53,6 +53,10 @@ $GLOBALS['coind'] = array(
 global $logger;
 $logger = new Logger('name');
 
+/*$test_str = '35eb87ae90d44b98898fec8c39577b76cb1eb08e1261cfc10706c8ce9a1d01cf';
+var_dump($test_str);
+var_dump(implode('', array_reverse(str_split($test_str, 2))));*/
+
 // Add log methods
 foreach($GLOBALS['coind']['logger'] as $logger_config) {
     switch($logger_config['type']) {

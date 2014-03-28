@@ -39,8 +39,11 @@ class ObjectTransformer {
                 $value = array();
 
                 // Add set elements
-                foreach($property->getValue($object) as $set_val) {
-                    $value[] = $this->toMongo($set_val);
+                $obj_val = $property->getValue($object);
+                if (is_array($obj_val)) {
+                    foreach($property->getValue($object) as $set_val) {
+                        $value[] = $this->toMongo($set_val);
+                    }
                 }
             } else if (class_exists($type)) {
                 // It's a sub-class !
