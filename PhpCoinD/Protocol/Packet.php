@@ -140,6 +140,7 @@ class Packet {
      * @PhpCoinD\Annotation\Unserialize
      * @param $serializer Serializer
      * @param $stream resource
+     * @return bool
      * @throws \PhpCoinD\Exception\StreamException
      * @throws \Exception
      */
@@ -152,7 +153,12 @@ class Packet {
         }
 
         // Read the raw payload
-        $this->payload = $serializer->read_raw($stream, $this->header->length);
+        if ($this->header->length > 0) {
+            $this->payload = $serializer->read_raw($stream, $this->header->length);
+        } else {
+            // Empty payload !
+            $this->payload = '';
+        }
 
         // Compute checksum
         $checksummer = new DSha256ChecksumComputer();
@@ -162,7 +168,7 @@ class Packet {
         }
 
         // Create a stream from the raw payload
-        $stream_payload = fopen('data://application/octet-stream;base64,' . base64_encode($this->payload), 'r+');
+        $stream_payload = fopen('data://application/octet-stream;base64,' . base64_encode($this->payload), 'r');
         try {
             // Parse the Payload according to the packet type
             $this->payload = $serializer->read_object($stream_payload, $this->getPayloadClassName());
@@ -174,5 +180,8 @@ class Packet {
         }
 
         fclose($stream_payload);
+
+        // We did the job
+        return true;
     }
 }

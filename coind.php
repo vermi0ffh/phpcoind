@@ -50,6 +50,7 @@ $GLOBALS['coind'] = array(
 
 /////////////////////////////////////////////////
 // Init logger
+global $logger;
 $logger = new Logger('name');
 
 // Add log methods

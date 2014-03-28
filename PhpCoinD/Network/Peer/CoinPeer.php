@@ -70,6 +70,15 @@ class CoinPeer implements Peer {
     protected $_remote_end_point;
 
     /**
+     * Flag : did we received a version ?
+     *  0 : no
+     *  1 : yes
+     *  2 : verack send
+     * @var int
+     */
+    protected $_version_received = 0;
+
+    /**
      * Flag : did we sent our version ?
      *  0 : no
      *  1 : yes
@@ -205,7 +214,16 @@ class CoinPeer implements Peer {
             case 'alert':
                 // Alert packet : an important message. We log it !
                 if ($packet->payload instanceof Alert) {
-                    $this->getLogger()->addAlert($packet->payload->getAlertDetail()->status_bar);
+                    // Get current protocol version
+                    $version = $this->getCoinNetworkSocketmanager()->getNetwork()->getProtocolVersion();
+
+                    // If needed, display message !
+                    if ($version >= $packet->payload->getAlertDetail()->min_ver
+                        && $version <= $packet->payload->getAlertDetail()->max_ver
+                        && $packet->payload->getAlertDetail()->expiration < time()) {
+                        // Message is for us ! Let's log it
+                        $this->getLogger()->addAlert($packet->payload->getAlertDetail()->status_bar);
+                    }
                 }
                 break;
 
@@ -249,11 +267,11 @@ class CoinPeer implements Peer {
                 break;
 
             case 'version':
-                if ($this->_version_sent > 0) {
+                if ($this->_version_received > 0) {
                     $this->getLogger()->addWarning("version packet already received once !");
                 }
                 // We got the packet
-                $this->_version_sent = 1;
+                $this->_version_received = 1;
 
                 // Reply to "version" with a "verack" packet
                 $verack_packet = $this->createPacket('verack');
@@ -261,7 +279,7 @@ class CoinPeer implements Peer {
                 $this->writePacket($verack_packet);
 
                 // We just send a verack
-                $this->_version_sent = 2;
+                $this->_version_received = 2;
 
                 // Send version back if needed (if version already sent, only verack is sent !)
                 if ($this->_version_sent == 0) {
@@ -275,12 +293,6 @@ class CoinPeer implements Peer {
                 }
                 // We juste received a verack for our version packet
                 $this->_version_sent = 2;
-
-                /*$getaddr_packet = $this->createPacket('getaddr');
-
-                // Create the version payload
-                $getaddr_packet->payload = new Void();
-                $this->writePacket($getaddr_packet);*/
                 break;
 
             default:
@@ -366,7 +378,7 @@ class CoinPeer implements Peer {
             $version_packet->payload->addr_from = NetworkAddress::fromString($this->getRemoteEndPoint()->address, $this->getRemoteEndPoint()->port);
             $version_packet->payload->nonce = $this->getCoinNetworkSocketmanager()->getNetwork()->getNonce();
             $version_packet->payload->user_agent = "CoinPHPd";
-            $version_packet->payload->start_height = 0;
+            $version_packet->payload->start_height = 1;
 
             // Write the version packet to the socket
             $this->writePacket($version_packet);
@@ -388,7 +400,7 @@ class CoinPeer implements Peer {
      */
     public function writePacket($packet) {
         // Until version exchange is done, we can't then anything else than version and verack
-        if ( $this->_version_sent != 2 && !in_array($packet->header->command, array('version', 'verack'))) {
+        if ( ($this->_version_sent != 2 || $this->_version_received != 2) && !in_array($packet->header->command, array('version', 'verack'))) {
             throw new PeerNotReadyException();
         }
 
