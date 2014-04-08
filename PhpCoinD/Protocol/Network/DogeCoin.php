@@ -25,6 +25,7 @@
 
 namespace PhpCoinD\Protocol\Network;
 
+use PhpCoinD\Protocol\Blockchain;
 use PhpCoinD\Protocol\Component\BlockHeaderShort;
 use PhpCoinD\Protocol\Component\Hash,
     PhpCoinD\Protocol\Component\OutPoint,
@@ -40,7 +41,6 @@ class DogeCoin implements Network {
      * @var int
      */
     protected $_nonce;
-
 
     /**
      * @var Store
@@ -182,5 +182,79 @@ class DogeCoin implements Network {
      */
     public function setStore($store) {
         $this->_store = $store;
+    }
+
+    /**
+     * Add a new block to the blockchain
+     * @param Block $block
+     * @return mixed
+     */
+    public function addBlock($block) {
+        // TODO: Implement addBlock() method.
+    }
+
+    /**
+     * Get a block by it's hash
+     * @param Hash $hash
+     * @return Block|null
+     */
+    public function getBlockByHash($hash) {
+        // TODO: Implement getBlockByHash() method.
+    }
+
+    /**
+     * Get a block by it's height in the blockchain
+     * @param int $height
+     * @return Block|null
+     */
+    public function getBlockByHeight($height) {
+        // TODO: Implement getBlockByHeight() method.
+    }
+
+    /**
+     * Get the height of the blockchain
+     * @return int
+     */
+    public function getCurrentHeight() {
+        // TODO: Implement getCurrentHeight() method.
+    }
+
+    /**
+     * Return the last block of the blockchain
+     * @return Block
+     */
+    public function getLastBlock() {
+        // TODO: Implement getLastBlock() method.
+    }
+
+    /**
+     * Return the network of this blockchain
+     * @return Network
+     */
+    public function getNetwork() {
+        // TODO: Implement getNetwork() method.
+    }
+
+    /**
+     * Check if a block is valid
+     * @param Block $block
+     * @return bool true is the block is valid, false is not or if the function can't answer
+     */
+    public function isBlockValid($block) {
+        // TODO: Implement isBlockValid() method.
+    }
+
+    /**
+     * @return Blockchain
+     */
+    public function getBlockchain() {
+        // TODO: Implement getBlockchain() method.
+    }
+
+    /**
+     * @param Blockchain $blockchain
+     */
+    public function setBlockchain($blockchain) {
+        // TODO: Implement setBlockchain() method.
     }
 }

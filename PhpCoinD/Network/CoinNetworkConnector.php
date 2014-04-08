@@ -8,7 +8,7 @@
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- *
+ * 
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
  *
@@ -20,15 +20,26 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  *
- * Created 31/03/14 16:05 by Aurélien RICHAUD
+ * Created 08/04/14 14:53 by Aurélien RICHAUD
  */
 
-namespace PhpCoinD\Storage;
+namespace PhpCoinD\Network;
+use PhpCoinD\Protocol\Network;
+
 
 /**
- * Define a Store used by DogeCoinPhp
- * @package PhpCoinD\Protocol\Storage
+ * Define a way to communicate with the coin network
+ * @package PhpCoinD\Network
  */
-interface Store extends BlockStore, PeerStore {
+interface CoinNetworkConnector {
+    /**
+     * @return mixed
+     */
+    public function getCoinPacketHandler();
 
+    /**
+     * Return the network concerned by this connector
+     * @return Network
+     */
+    public function getNetwork();
 } 

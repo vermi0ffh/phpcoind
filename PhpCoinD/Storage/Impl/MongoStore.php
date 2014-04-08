@@ -37,6 +37,7 @@ use PhpCoinD\Storage\Store;
 
 class MongoStore implements Store {
     const BLOCK_COLLECTION = 'blocks';
+    const PEER_COLLECTION = 'peers';
 
     /**
      * @var MongoClient
@@ -98,8 +99,8 @@ class MongoStore implements Store {
      * Add a Peer to the database
      * @param NetworkAddressTimestamp $networkAddressTimestamp
      */
-    public function addPeer(NetworkAddressTimestamp $networkAddressTimestamp) {
-        // TODO: Implement WritePeer() method.
+    public function addPeer($networkAddressTimestamp) {
+        // TODO: Implement addPeer() method.
     }
 
 
@@ -125,16 +126,6 @@ class MongoStore implements Store {
         $ret[] = $this->getNetwork()->getGenesisBlockHash();
 
         return $ret;
-    }
-
-
-    /**
-     * Get the number of blocks stored
-     * @return int
-     */
-    public function countBlocks() {
-        return $this->getMongoDb()->selectCollection(self::BLOCK_COLLECTION)
-            ->count();
     }
 
 
@@ -223,5 +214,30 @@ class MongoStore implements Store {
      */
     public function getNetwork() {
         return $this->_network;
+    }
+
+    /**
+     * Get the number of blocks stored
+     * @return int
+     */
+    public function getHeight() {
+        return $this->getMongoDb()->selectCollection(self::BLOCK_COLLECTION)
+            ->count();
+    }
+
+    /**
+     * Remove a peer from the store
+     * @param NetworkAddressTimestamp $networkAddressTimestamp
+     */
+    public function removePeer($networkAddressTimestamp) {
+        // TODO: Implement removePeer() method.
+    }
+
+    /**
+     * Get a random peer against all available peers
+     * @return NetworkAddressTimestamp
+     */
+    public function getRandomPeer() {
+        // TODO: Implement getRandomPeer() method.
     }
 }

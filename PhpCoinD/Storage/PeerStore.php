@@ -8,7 +8,7 @@
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- *
+ * 
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
  *
@@ -20,15 +20,44 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  *
- * Created 31/03/14 16:05 by Aurélien RICHAUD
+ * Created 08/04/14 14:44 by Aurélien RICHAUD
  */
 
 namespace PhpCoinD\Storage;
 
-/**
- * Define a Store used by DogeCoinPhp
- * @package PhpCoinD\Protocol\Storage
- */
-interface Store extends BlockStore, PeerStore {
 
+use PhpCoinD\Protocol\Component\NetworkAddressTimestamp;
+
+interface PeerStore {
+    /**
+     * Add a Peer to the database
+     * @param NetworkAddressTimestamp $networkAddressTimestamp
+     */
+    public function addPeer($networkAddressTimestamp);
+
+    /**
+     * This method initialize the store. Creatre tables, load caches, insert genesis block, etc...
+     */
+    public function initializeStore();
+
+    /**
+     * Read peers from the database
+     * @param int $skip
+     * @param int $size
+     * @return NetworkAddressTimestamp[]
+     */
+    public function readPeers($skip = 0, $size = 10);
+
+
+    /**
+     * Remove a peer from the store
+     * @param NetworkAddressTimestamp $networkAddressTimestamp
+     */
+    public function removePeer($networkAddressTimestamp);
+
+    /**
+     * Get a random peer against all available peers
+     * @return NetworkAddressTimestamp
+     */
+    public function getRandomPeer();
 } 

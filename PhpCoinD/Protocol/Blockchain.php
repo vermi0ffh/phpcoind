@@ -20,68 +20,63 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  *
- * Created 31/03/14 16:05 by Aurélien RICHAUD
+ * Created 05/04/14 17:35 by Aurélien RICHAUD
  */
 
 namespace PhpCoinD\Protocol;
-
 use PhpCoinD\Protocol\Component\Hash;
 use PhpCoinD\Protocol\Payload\Block;
 use PhpCoinD\Storage\Store;
 
+
 /**
- * All information needed about a network
- * @package PhpCoinD\Coin
+ * Interface Blockchain
+ * @package PhpCoinD\Protocol
  */
-interface Network extends Blockchain {
+interface Blockchain {
     /**
-     * Create the genesis block for the network
+     * Add a new block to the blockchain
+     * @param Block $block
+     * @return mixed
+     */
+    public function addBlock($block);
+
+    /**
+     * Get a block by it's hash
+     * @param Hash $hash
+     * @return Block|null
+     */
+    public function getBlockByHash($hash);
+
+    /**
+     * Get a block by it's height in the blockchain
+     * @param int $height
+     * @return Block|null
+     */
+    public function getBlockByHeight($height);
+
+    /**
+     * Get the height of the blockchain
+     * @return int
+     */
+    public function getCurrentHeight();
+
+
+    /**
+     * Return the last block of the blockchain
      * @return Block
      */
-    public function createGenesisBlock();
+    public function getLastBlock();
 
     /**
-     * @return Blockchain
+     * @return Store
      */
-    public function getBlockchain();
+    public function getStore();
 
     /**
-     * The client version advertised
-     * @return int
+     * Check if a block is valid
+     * @param Block $block
+     * @return bool true is the block is valid, false is not or if the function can't answer
      */
-    public function getClientVersion();
-
-    /**
-     * The binary representation of the genesis block
-     * @return Hash
-     */
-    public function getGenesisBlockHash();
-
-    /**
-     * The magic value for packet header
-     * @return int
-     */
-    public function getMagicValue();
-
-    /**
-     * Return the hash of the next checkpoint (if possible)
-     * @return Hash
-     */
-    public function getNextCheckPoint();
-
-    /**
-     * The protocol version
-     * @return int
-     */
-    public function getProtocolVersion();
-
-    /**
-     * @param Blockchain $blockchain
-     */
-    public function setBlockchain($blockchain);
-
-    /**
-     * @param Store $store
-     */
-    public function setStore($store);
-} 
+    public function isBlockValid($block);
+}
