@@ -24,22 +24,44 @@
  */
 
 namespace PhpCoinD\Network;
+use Monolog\Logger;
+use PhpCoinD\Network\Socket\Peer;
 use PhpCoinD\Protocol\Network;
 
 
 /**
- * Define a way to communicate with the coin network
+ * Define a way to communicate with the coin network.
+ * The default way is the SocketCoinNetworkConnector
  * @package PhpCoinD\Network
  */
 interface CoinNetworkConnector {
     /**
-     * @return mixed
+     * Return the PacketHandler
+     * @return CoinPacketHandler
      */
     public function getCoinPacketHandler();
+
+    /**
+     * @return Logger
+     */
+    public function getLogger();
 
     /**
      * Return the network concerned by this connector
      * @return Network
      */
     public function getNetwork();
+
+
+    /**
+     * Get all connected peers
+     * @return Peer[]
+     */
+    public function getPeers();
+
+    /**
+     * Method used to do stuff needed for the network.
+     * This method should return "quickly" to prevent blocking of the other networks
+     */
+    public function run();
 } 

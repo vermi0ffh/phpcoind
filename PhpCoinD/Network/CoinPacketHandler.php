@@ -24,6 +24,10 @@
  */
 
 namespace PhpCoinD\Network;
+use Monolog\Logger;
+use PhpCoinD\Network\Socket\Peer;
+use PhpCoinD\Protocol\Network;
+use PhpCoinD\Protocol\Packet;
 
 
 /**
@@ -32,8 +36,39 @@ namespace PhpCoinD\Network;
  */
 interface CoinPacketHandler {
     /**
+     * Create an empty packet
+     * @param string $command
+     * @return Packet
+     */
+    public function createPacket($command);
+
+    /**
+     * @return Logger
+     */
+    public function getLogger();
+
+    /**
+     * Get the network we are currently handling packets for
+     * @return Network
+     */
+    public function getNetwork();
+
+    /**
      * Callback : When a peer connect to ourself
      * @param Peer $peer
      */
+    public function onPeerAccept($peer);
+
+    /**
+     * Callback : When we connect to a new peer
+     * @param Peer $peer
+     */
     public function onPeerConnect($peer);
+
+    /**
+     * Callback : When a message is received
+     * @param Peer $peer The peer that sent us the packet
+     * @param Packet $packet The packet
+     */
+    public function onPacketReceived($peer, $packet);
 }

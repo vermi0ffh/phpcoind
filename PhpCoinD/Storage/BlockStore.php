@@ -47,6 +47,20 @@ interface BlockStore {
     public function blockLocator($block_id);
 
     /**
+     * Get a block by it's hash
+     * @param Hash $hash
+     * @return Block|null
+     */
+    public function getBlockByHash($hash);
+
+    /**
+     * Get a block by it's height in the blockchain
+     * @param int $height
+     * @return Block|null
+     */
+    public function getBlockByHeight($height);
+
+    /**
      * Get the number of blocks stored
      * @return int
      */
@@ -62,11 +76,4 @@ interface BlockStore {
      * This method initialize the store. Creatre tables, load caches, insert genesis block, etc...
      */
     public function initializeStore();
-
-    /**
-     * Read a block from the database
-     * @param string $block_id
-     * @return Block
-     */
-    public function readBlock($block_id);
 } 

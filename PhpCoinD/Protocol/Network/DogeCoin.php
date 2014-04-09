@@ -25,7 +25,11 @@
 
 namespace PhpCoinD\Protocol\Network;
 
-use PhpCoinD\Protocol\Blockchain;
+use Monolog\Logger;
+use PhpCoinD\Network\CoinNetworkConnector;
+use PhpCoinD\Network\CoinPacketHandler;
+use PhpCoinD\Network\Impl\DefaultPacketHandler;
+use PhpCoinD\Network\Impl\SocketCoinNetworkConnector;
 use PhpCoinD\Protocol\Component\BlockHeaderShort;
 use PhpCoinD\Protocol\Component\Hash,
     PhpCoinD\Protocol\Component\OutPoint,
@@ -38,9 +42,24 @@ use PhpCoinD\Storage\Store;
 
 class DogeCoin implements Network {
     /**
+     * @var Logger
+     */
+    protected $_logger;
+
+    /**
+     * @var CoinNetworkConnector[]
+     */
+    protected $_network_connectors;
+
+    /**
      * @var int
      */
     protected $_nonce;
+
+    /**
+     * @var CoinPacketHandler
+     */
+    protected $_packet_handler;
 
     /**
      * @var Store
@@ -48,8 +67,38 @@ class DogeCoin implements Network {
     protected $_store;
 
 
-    public function __construct() {
+    /**
+     * @param Logger $logger
+     */
+    public function __construct($logger) {
+        $this->_logger = $logger;
         $this->_nonce = rand(0, PHP_INT_MAX);
+
+        // Init packet handler
+        $this->_packet_handler = new DefaultPacketHandler($this);
+        // Init connectors
+        $this->_network_connectors = array();
+        $this->addNetworkConnector(new SocketCoinNetworkConnector($this->_packet_handler));
+    }
+
+
+    /**
+     * Add a new block to the blockchain
+     * @param Block $block
+     * @return mixed
+     */
+    public function addBlock($block) {
+        if ($this->isBlockValid($block)) {
+            $this->getStore()->addBlock($block);
+        }
+    }
+
+    /**
+     * Register a new way to connect to the coin network
+     * @param CoinNetworkConnector $connector
+     */
+    public function addNetworkConnector($connector) {
+        $this->_network_connectors[] = $connector;
     }
 
     /**
@@ -96,6 +145,24 @@ class DogeCoin implements Network {
     }
 
     /**
+     * Get a block by it's hash
+     * @param Hash $hash
+     * @return Block|null
+     */
+    public function getBlockByHash($hash) {
+        // TODO: Implement getBlockByHash() method.
+    }
+
+    /**
+     * Get a block by it's height in the blockchain
+     * @param int $height
+     * @return Block|null
+     */
+    public function getBlockByHeight($height) {
+        // TODO: Implement getBlockByHeight() method.
+    }
+
+    /**
      * The client version advertised
      * @return int
      */
@@ -112,19 +179,26 @@ class DogeCoin implements Network {
     }
 
     /**
-     * Get the number of blocks currentrly stored
+     * Get the height of the blockchain
      * @return int
      */
-    public function getHeight() {
-        return $this->getStore()->countBlocks();
+    public function getCurrentHeight() {
+        return $this->getStore()->getHeight();
     }
 
     /**
-     * Return the Hash of the last block received
-     * @return Hash
+     * Return the last block of the blockchain
+     * @return Block
      */
-    public function getLastBlockHash() {
-        return $this->getStore()->getLastBlock()->block_hash;
+    public function getLastBlock() {
+        // TODO: Implement getLastBlock() method.
+    }
+
+    /**
+     * @return Logger
+     */
+    public function getLogger() {
+        return $this->_logger;
     }
 
     /**
@@ -140,13 +214,15 @@ class DogeCoin implements Network {
      * @return Hash
      */
     public function getNextCheckPoint() {
-        if ($this->getHeight() == 0) {
+        $height = $this->getCurrentHeight();
+
+        if ($height == 0) {
             return $this->getGenesisBlockHash();
-        } else if ($this->getHeight() <= 42279) {
+        } else if ($height <= 42279) {
             return new Hash(hex2bin('3a4d13c36ea8b9e4e8518bbd781540efc9d26a95ef8475e82262a439efc34484'));
-        } else if ($this->getHeight() <= 42400) {
+        } else if ($height <= 42400) {
             return new Hash(hex2bin('b45272501fb44274161970af94c3bdc01f7cdffd1c36f9a6d4e6d97ec1b77b55'));
-        } else if ($this->getHeight() <= 104679) {
+        } else if ($height <= 104679) {
             return new Hash(hex2bin('cf011d9acec80607c1cf61128eb01ecb767b57398cec8f89984bd490ae87eb35'));
         }
 
@@ -178,64 +254,6 @@ class DogeCoin implements Network {
     }
 
     /**
-     * @param Store $store
-     */
-    public function setStore($store) {
-        $this->_store = $store;
-    }
-
-    /**
-     * Add a new block to the blockchain
-     * @param Block $block
-     * @return mixed
-     */
-    public function addBlock($block) {
-        // TODO: Implement addBlock() method.
-    }
-
-    /**
-     * Get a block by it's hash
-     * @param Hash $hash
-     * @return Block|null
-     */
-    public function getBlockByHash($hash) {
-        // TODO: Implement getBlockByHash() method.
-    }
-
-    /**
-     * Get a block by it's height in the blockchain
-     * @param int $height
-     * @return Block|null
-     */
-    public function getBlockByHeight($height) {
-        // TODO: Implement getBlockByHeight() method.
-    }
-
-    /**
-     * Get the height of the blockchain
-     * @return int
-     */
-    public function getCurrentHeight() {
-        // TODO: Implement getCurrentHeight() method.
-    }
-
-    /**
-     * Return the last block of the blockchain
-     * @return Block
-     */
-    public function getLastBlock() {
-        // TODO: Implement getLastBlock() method.
-    }
-
-    /**
-     * Return the network of this blockchain
-     * @return Network
-     */
-    public function getNetwork() {
-        // TODO: Implement getNetwork() method.
-    }
-
-    /**
      * Check if a block is valid
      * @param Block $block
      * @return bool true is the block is valid, false is not or if the function can't answer
@@ -245,16 +263,25 @@ class DogeCoin implements Network {
     }
 
     /**
-     * @return Blockchain
+     * Method used to do stuff needed for the network.
+     * This method should return "quickly" to prevent blocking of the other networks
      */
-    public function getBlockchain() {
-        // TODO: Implement getBlockchain() method.
+    public function run() {
+        // Can't run if we have no store
+        if ($this->getStore() == null) {
+            return;
+        }
+
+        // Run every network connectors sending & receiving packets
+        foreach($this->_network_connectors as $network_connector) {
+            $network_connector->run();
+        }
     }
 
     /**
-     * @param Blockchain $blockchain
+     * @param Store $store
      */
-    public function setBlockchain($blockchain) {
-        // TODO: Implement setBlockchain() method.
+    public function setStore($store) {
+        $this->_store = $store;
     }
 }

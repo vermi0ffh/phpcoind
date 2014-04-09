@@ -23,44 +23,48 @@
  * Created 31/03/14 16:05 by Aurélien RICHAUD
  */
 
-namespace PhpCoinD\Network\Peer;
+namespace PhpCoinD\Network\Socket\Impl;
 
 use Aza\Components\Socket\SocketStream;
 use Exception;
 use Monolog\Logger;
 use PhpCoinD\Exception\PeerNotReadyException;
+use PhpCoinD\Network\CoinPacketHandler;
+use PhpCoinD\Network\Socket\Peer;
 use PhpCoinD\Protocol\Component\NetworkAddress;
 use PhpCoinD\Protocol\Network;
 use PhpCoinD\Protocol\Packet;
-use PhpCoinD\Protocol\Payload\Version,
-    PhpCoinD\Protocol\Payload\Void;
+use PhpCoinD\Protocol\Payload\Version;
 use PhpCoinD\Protocol\Util\Impl\NetworkSerializer;
 use PhpCoinD\Exception\StreamException;
-use PhpCoinD\Network\CoinNetworkSocketManager,
-    PhpCoinD\Network\ConnectionEndPoint,
-    PhpCoinD\Network\Peer;
+use PhpCoinD\Network\ConnectionEndPoint;
 
-class CoinPeer implements Peer {
+class SocketPeer implements Peer {
     /**
      * 1 Mb recv buffer size
      */
     const MAX_RECV_BUFFER_SIZE = 1048576;
 
     /**
-     * @var CoinNetworkSocketManager
+     * @var CoinPacketHandler
      */
-    protected $_coin_network_socket_manager;
+    protected $_coin_packet_handler;
 
     /**
-     * @var SocketStream
+     * @var ConnectionEndPoint
      */
-    protected $_socket;
-
+    protected $_local_end_point;
 
     /**
-     * @var Logger
+     * Receive buffer
+     * @var string
      */
-    protected $_logger;
+    protected $_recv_buffer = '';
+
+    /**
+     * @var ConnectionEndPoint
+     */
+    protected $_remote_end_point;
 
     /**
      * The packet serializer
@@ -69,46 +73,25 @@ class CoinPeer implements Peer {
     protected $_serializer;
 
     /**
-     * Receive buffer
-     * @var string
+     * @var SocketStream
      */
-    protected $_recv_buffer = '';
+    protected $_socket;
 
+    /**
+     * @var bool
+     */
+    protected $_version_recieved;
+
+    /**
+     * @var bool
+     */
+    protected $_version_sent;
 
     /**
      * Write buffer
      * @var string
      */
     protected $_write_buffer = '';
-
-    /**
-     * @var ConnectionEndPoint
-     */
-    protected $_local_end_point;
-
-    /**
-     * @var ConnectionEndPoint
-     */
-    protected $_remote_end_point;
-
-    /**
-     * Flag : did we received a version ?
-     *  0 : no
-     *  1 : yes
-     *  2 : verack send
-     * @var int
-     */
-    protected $_version_received = 0;
-
-    /**
-     * Flag : did we sent our version ?
-     *  0 : no
-     *  1 : yes
-     *  2 : verack received
-     * @var int
-     */
-    protected $_version_sent = 0;
-
 
     /**
      * The version payload of the remote peer
@@ -120,33 +103,27 @@ class CoinPeer implements Peer {
 
     /////////////////////////////////////////////
     // Protected methods
-    /**
-     * Create an empty packet with the given command
-     * @see CoinNetworkSocketManager::createPacket
-     * @param string $command
-     * @return Packet
-     */
-    protected function createPacket($command) {
-        return $this->getCoinNetworkSocketmanager()->createPacket($command);
-    }
 
 
 
     /////////////////////////////////////////////
     // Constructor
     /**
-     * @param CoinNetworkSocketManager $coin_network_socket_manager
+     * @param CoinPacketHandler $coin_packet_handler
      * @param SocketStream $socket
      */
-    public function __construct($coin_network_socket_manager, $socket) {
-        $this->_coin_network_socket_manager = $coin_network_socket_manager;
+    public function __construct($coin_packet_handler, $socket) {
+        $this->_coin_packet_handler = $coin_packet_handler;
         $this->_socket = $socket;
         $this->_serializer = new NetworkSerializer();
-        $this->_logger = $coin_network_socket_manager->getLogger();
 
         // Instanciate endpoints
         $this->_local_end_point = new ConnectionEndPoint();
         $this->_remote_end_point = new ConnectionEndPoint();
+
+        // No version exchange right now
+        $this->_version_recieved = false;
+        $this->_version_sent = false;
 
         // Populate endpoints
         $this->getSocket()->getPeer($this->_remote_end_point->address, $this->_remote_end_point->port);
@@ -161,26 +138,11 @@ class CoinPeer implements Peer {
     }
 
     /**
-     * Callback called when socket is closed
+     * Get the packet handler for this socket
+     * @return CoinPacketHandler
      */
-    public function onClose() {
-        // Peer is closed
-    }
-
-    /**
-     * Get the low level socket
-     * @return resource
-     */
-    public function getSocketResource() {
-        return $this->getSocket()->resource;
-    }
-
-    /**
-     * Get the coin network associated with the peer
-     * @return CoinNetworkSocketManager
-     */
-    public function getCoinNetworkSocketmanager() {
-        return $this->_coin_network_socket_manager;
+    public function getCoinNetworkConnector() {
+        return $this->_coin_packet_handler;
     }
 
     /**
@@ -196,6 +158,22 @@ class CoinPeer implements Peer {
     }
 
     /**
+     * Return the peer version message as he sended it
+     * @return Version
+     */
+    public function getPeerVersion() {
+        return $this->_peer_version;
+    }
+
+    /**
+     * Get the low level socket
+     * @return resource
+     */
+    public function getSocketResource() {
+        return $this->getSocket()->resource;
+    }
+
+    /**
      * @return \PhpCoinD\Network\ConnectionEndPoint
      */
     public function getLocalEndPoint() {
@@ -206,7 +184,7 @@ class CoinPeer implements Peer {
      * @return Logger
      */
     public function getLogger() {
-        return $this->_logger;
+        return $this->getCoinNetworkConnector()->getLogger();
     }
 
     /**
@@ -231,6 +209,22 @@ class CoinPeer implements Peer {
     }
 
     /**
+     * Return true if a version packet was recieved
+     * @return int
+     */
+    public function isVersionRecieved() {
+        return $this->_version_recieved;
+    }
+
+    /**
+     * Return true if a version packet was sent
+     * @return bool
+     */
+    public function isVersionSent() {
+        return $this->_version_sent;
+    }
+
+    /**
      * Check if the socket has write pending
      * @return bool
      */
@@ -239,47 +233,55 @@ class CoinPeer implements Peer {
     }
 
     /**
-     * Callback when a packet is received
-     * @param Packet $packet
+     * Send a version packet to the peer
      */
-    public function onPacket($packet) {
-        switch($packet->header->command) {
-            case 'version':
-                if ($this->_version_received > 0) {
-                    $this->getLogger()->addWarning("version packet already received once !");
-                }
-                // We got the packet
-                $this->_version_received = 1;
+    public function sendVersionPacket() {
+        $network = $this->getCoinNetworkConnector()->getNetwork();
 
-                // Reply to "version" with a "verack" packet
-                $verack_packet = $this->createPacket('verack');
-                $verack_packet->payload = new Void();
-                $this->writePacket($verack_packet);
+        $version_packet = $this->getCoinNetworkConnector()->createPacket('version');
+        $version_packet->payload->version = $network->getProtocolVersion();
+        $version_packet->payload->services = 0x1;
+        $version_packet->payload->timestamp = time();
+        $version_packet->payload->addr_recv = NetworkAddress::fromString($this->getLocalEndPoint()->address, $this->getLocalEndPoint()->port);
+        $version_packet->payload->addr_from = NetworkAddress::fromString($this->getRemoteEndPoint()->address, $this->getRemoteEndPoint()->port);
+        $version_packet->payload->nonce = $network->getNonce();
+        $version_packet->payload->user_agent = "CoinPHPd";
+        $version_packet->payload->start_height = $network->getCurrentHeight();
 
-                // We just send a verack
-                $this->_version_received = 2;
+        // Write the version packet
+        $this->writePacket($version_packet);
 
-                // Send version back if needed (if version already sent, only verack is sent !)
-                if ($this->_version_sent == 0) {
-                    $this->sendVersion();
-                }
+        // Set the flag telling we sent the version packet
+        $this->setVersionSent();
+    }
 
-                // Store the peer version payload
-                $this->_peer_version = $packet->payload;
-                break;
+    /**
+     * Set the peer version information
+     * @param Version $version
+     */
+    public function setPeerVersion($version) {
+        $this->_peer_version = $version;
+    }
 
-            case 'verack':
-                if ($this->_version_sent == 0) {
-                    $this->getLogger()->addWarning("verack received before version packet !");
-                }
-                // We juste received a verack for our version packet
-                $this->_version_sent = 2;
-                break;
+    /**
+     * Set the flag telling version packet was recived
+     */
+    public function setVersionRecieved() {
+        $this->_version_recieved = true;
+    }
 
-            default:
-                // Forward packet to the network manager
-                $this->getCoinNetworkSocketmanager()->onPacket($packet);
-        }
+    /**
+     * Set the flag telling version packet was recived
+     */
+    public function setVersionSent() {
+        $this->_version_sent = true;
+    }
+
+    /**
+     * Callback called when socket is closed
+     */
+    public function onClose() {
+        // Peer is closed
     }
 
     /**
@@ -323,7 +325,7 @@ class CoinPeer implements Peer {
                 $this->_recv_buffer = substr($this->_recv_buffer, ftell($buffered_stream));
 
                 // Handle the new packet
-                $this->onPacket($packet);
+                $this->getCoinNetworkConnector()->onPacketReceived($this, $packet);
             }
         } catch (StreamException $e) {
             // No more packet !
@@ -345,35 +347,6 @@ class CoinPeer implements Peer {
     }
 
     /**
-     * Send a version packet
-     */
-    public function sendVersion() {
-        try {
-            $version_packet = $this->createPacket('version');
-
-            // Create the version payload
-            $version_packet->payload = new Version();
-            $version_packet->payload->version = $this->getCoinNetworkSocketmanager()->getNetwork()->getProtocolVersion();
-            $version_packet->payload->services = 0x1;
-            $version_packet->payload->timestamp = time();
-            $version_packet->payload->addr_recv = NetworkAddress::fromString($this->getLocalEndPoint()->address, $this->getLocalEndPoint()->port);
-            $version_packet->payload->addr_from = NetworkAddress::fromString($this->getRemoteEndPoint()->address, $this->getRemoteEndPoint()->port);
-            $version_packet->payload->nonce = $this->getCoinNetworkSocketmanager()->getNetwork()->getNonce();
-            $version_packet->payload->user_agent = "CoinPHPd";
-            $version_packet->payload->start_height = $this->getCoinNetworkSocketmanager()->getNetwork()->getHeight();
-
-            // Write the version packet to the socket
-            $this->writePacket($version_packet);
-            // Set the flag : version packet has been send
-            $this->_version_sent = 1;
-        } catch (Exception $e) {
-            $this->getLogger()->addAlert($e);
-            $this->onClose();
-        }
-    }
-
-
-    /**
      * Write a packet to the peer
      * The packet is nos written directly, it is added to the write buffer instead
      * and send when the socket is ready
@@ -382,7 +355,7 @@ class CoinPeer implements Peer {
      */
     public function writePacket($packet) {
         // Until version exchange is done, we can't then anything else than version and verack
-        if ( ($this->_version_sent != 2 || $this->_version_received != 2) && !in_array($packet->header->command, array('version', 'verack'))) {
+        if ( (!$this->isVersionRecieved() || !$this->isVersionSent()) && !in_array($packet->header->command, array('version', 'verack'))) {
             throw new PeerNotReadyException();
         }
 

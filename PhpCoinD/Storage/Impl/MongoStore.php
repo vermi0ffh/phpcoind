@@ -77,6 +77,7 @@ class MongoStore implements Store {
 
 
     /**
+     * Add a new block to the store
      * @param Block $bloc
      */
     public function addBlock($bloc) {
@@ -84,6 +85,21 @@ class MongoStore implements Store {
             return;
         }
 
+        // Compute block height
+        if ($bloc->block_hash->value == $this->getNetwork()->getGenesisBlockHash()) {
+            $bloc->height = 0;
+        } else {
+            // Get the parent-block height
+            $parent_block = $this->getBlockByHash($bloc->block_header->prev_block);
+            if ($parent_block == null) {
+                // Orphaned block ?
+                $bloc->height = -1;
+            } else {
+                $bloc->height = $parent_block->height+1;
+            }
+        }
+
+        // Transform the Block object into a BSON object
         $mongo_block = $this->_object_transformer->toMongo($bloc);
         $mongo_block['_id'] = bin2hex($bloc->block_hash->value);
 
@@ -112,7 +128,7 @@ class MongoStore implements Store {
     public function blockLocator($block_id) {
         $ret = array();
 
-        $block = $this->readBlock($block_id);
+        $block = $this->getBlockByHash($block_id);
         if ($block != null) {
             $ret[] = $block->block_hash;
         }
@@ -128,6 +144,69 @@ class MongoStore implements Store {
         return $ret;
     }
 
+    /**
+     * Get a block by it's hash
+     * @param Hash $hash
+     * @return Block|null
+     */
+    public function getBlockByHash($hash) {
+        $block = $this->getMongoDb()->selectCollection(self::BLOCK_COLLECTION)
+            ->findOne(array(
+                '_id' => bin2hex($hash->value),
+            ));
+
+        // No block found
+        if ($block == null) {
+            return null;
+        }
+
+        // Get the object back from the mongo bson object
+        return $this->_object_transformer->fromMongo($block);
+    }
+
+    /**
+     * Get a block by it's height in the blockchain
+     * @param int $height
+     * @return Block|null
+     */
+    public function getBlockByHeight($height) {
+        $block = $this->getMongoDb()->selectCollection(self::BLOCK_COLLECTION)
+            ->findOne(array(
+                'height' => $height,
+            ));
+
+        // No block found
+        if ($block == null) {
+            return null;
+        }
+
+        // Get the object back from the mongo bson object
+        return $this->_object_transformer->fromMongo($block);
+    }
+
+    /**
+     * Get the number of blocks stored
+     * @return int
+     */
+    public function getHeight() {
+        $block = $this->getMongoDb()->selectCollection(self::BLOCK_COLLECTION)
+            ->find()
+            ->sort(array('height' => -1))
+            ->limit(1)
+            ->current();
+
+        // No block found
+        if ($block == null) {
+            // // Really empty !
+            return -1;
+        }
+
+        /** @var $bloc Block Get the object back from the mongo bson object */
+        $bloc = $this->_object_transformer->fromMongo($block);
+
+        // Return the height of the last block
+        return $bloc->height;
+    }
 
     /**
      * Return the last block received
@@ -148,7 +227,6 @@ class MongoStore implements Store {
         return $this->_object_transformer->fromMongo($block);
     }
 
-
     /**
      * @return \MongoDB
      */
@@ -156,15 +234,27 @@ class MongoStore implements Store {
         return $this->_mongo_db;
     }
 
+    /**
+     * @return \PhpCoinD\Protocol\Network
+     */
+    public function getNetwork() {
+        return $this->_network;
+    }
+
+    /**
+     * Get a random peer against all available peers
+     * @return NetworkAddressTimestamp
+     */
+    public function getRandomPeer() {
+        // TODO: Implement getRandomPeer() method.
+    }
 
     /**
      * This method initialize the store. Creatre tables, etc...
      */
     public function initializeStore() {
-        $genesis_block = $this->readBlock($this->getNetwork()->getGenesisBlockHash());
-
-        // We need to insert the genesis block into the store
-        if ($genesis_block == null) {
+        // Check if we need to insert the genesis block
+        if ($this->getHeight() == -1) {
             $this->addBlock($this->getNetwork()->createGenesisBlock());
         }
 
@@ -173,29 +263,12 @@ class MongoStore implements Store {
         // Index timestamp of blocks
         $this->getMongoDb()->selectCollection(self::BLOCK_COLLECTION)
             ->ensureIndex(array('block_header.timestamp' => -1));
-        // Index transaction (to find empty blocks quickly)
+        // Index block htight
+        $this->getMongoDb()->selectCollection(self::BLOCK_COLLECTION)
+            ->ensureIndex(array('height' => -1));
+        // Index transactions
         $this->getMongoDb()->selectCollection(self::BLOCK_COLLECTION)
             ->ensureIndex(array('tx' => 1));
-    }
-
-    /**
-     * Read a block from the database
-     * @param Hash $block_id
-     * @return Block|null
-     */
-    public function readBlock($block_id) {
-        $block = $this->getMongoDb()->selectCollection(self::BLOCK_COLLECTION)
-            ->findOne(array(
-                '_id' => bin2hex($block_id->value),
-            ));
-
-        // No block found
-        if ($block == null) {
-            return null;
-        }
-
-        // Get the object back from the mongo object
-        return $this->_object_transformer->fromMongo($block);
     }
 
     /**
@@ -208,36 +281,11 @@ class MongoStore implements Store {
         // TODO: Implement ReadPeers() method.
     }
 
-
-    /**
-     * @return \PhpCoinD\Protocol\Network
-     */
-    public function getNetwork() {
-        return $this->_network;
-    }
-
-    /**
-     * Get the number of blocks stored
-     * @return int
-     */
-    public function getHeight() {
-        return $this->getMongoDb()->selectCollection(self::BLOCK_COLLECTION)
-            ->count();
-    }
-
     /**
      * Remove a peer from the store
      * @param NetworkAddressTimestamp $networkAddressTimestamp
      */
     public function removePeer($networkAddressTimestamp) {
         // TODO: Implement removePeer() method.
-    }
-
-    /**
-     * Get a random peer against all available peers
-     * @return NetworkAddressTimestamp
-     */
-    public function getRandomPeer() {
-        // TODO: Implement getRandomPeer() method.
     }
 }

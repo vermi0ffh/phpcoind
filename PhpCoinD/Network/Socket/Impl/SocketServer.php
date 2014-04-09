@@ -23,16 +23,18 @@
  * Created 31/03/14 16:05 by Aurélien RICHAUD
  */
 
-namespace PhpCoinD\Network;
+namespace PhpCoinD\Network\Socket\Impl;
 
 use Aza\Components\Socket\SocketStream;
-use PhpCoinD\Network\Peer\CoinPeer;
+use PhpCoinD\Network\CoinPacketHandler;
+use PhpCoinD\Network\Impl\SocketCoinNetworkConnector;
+use PhpCoinD\Network\Socket\AsyncSocket;
 
-class CoinServerSocket implements AsyncSocket {
+class SocketServer implements AsyncSocket {
     /**
-     * @var CoinNetworkSocketManager
+     * @var SocketCoinNetworkConnector
      */
-    protected $_coin_network;
+    protected $_coin_network_connector;
 
     /**
      * @var SocketStream
@@ -40,11 +42,11 @@ class CoinServerSocket implements AsyncSocket {
     protected $_socket;
 
     /**
-     * @param CoinNetworkSocketManager $coin_network
+     * @param SocketCoinNetworkConnector $coin_network_connector
      * @param SocketStream $socket
      */
-    public function __construct($coin_network, $socket) {
-        $this->_coin_network = $coin_network;
+    public function __construct($coin_network_connector, $socket) {
+        $this->_coin_network_connector = $coin_network_connector;
         $this->_socket = $socket;
     }
 
@@ -68,7 +70,7 @@ class CoinServerSocket implements AsyncSocket {
      */
     public function onRead() {
         // Add a new peer to the coin network
-        $this->getCoinNetwork()->addPeer( new CoinPeer($this->getCoinNetwork(), $this->getSocket()->accept()) );
+        $this->getCoinNetworkConnector()->onPeerAccept( new SocketPeer($this->getCoinNetworkConnector(), $this->getSocket()->accept()) );
     }
 
     /**
@@ -79,10 +81,10 @@ class CoinServerSocket implements AsyncSocket {
     }
 
     /**
-     * @return \PhpCoinD\Network\CoinNetworkSocketManager
+     * @return CoinPacketHandler
      */
-    public function getCoinNetwork() {
-        return $this->_coin_network;
+    public function getCoinNetworkConnector() {
+        return $this->_coin_network_connector;
     }
 
     /**

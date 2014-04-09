@@ -23,11 +23,13 @@
  * Created 31/03/14 16:05 by Aurélien RICHAUD
  */
 
-namespace PhpCoinD\Network;
+namespace PhpCoinD\Network\Socket;
 
 use Monolog\Logger;
+use PhpCoinD\Network\ConnectionEndPoint;
 use PhpCoinD\Protocol\Network;
 use PhpCoinD\Protocol\Packet;
+use PhpCoinD\Protocol\Payload\Version;
 
 /**
  * A connection with a peer on a coin network
@@ -35,11 +37,15 @@ use PhpCoinD\Protocol\Packet;
  */
 interface Peer extends AsyncSocket {
     /**
-     * Get the coin network associated with the peer
-     * @return Network
+     * Return the height of the peer (given in the version message)
+     * @return int
      */
-    public function getCoinNetworkSocketmanager();
+    public function getHeight();
 
+    /**
+     * @return ConnectionEndPoint
+     */
+    public function getLocalEndPoint();
 
     /**
      * @return Logger
@@ -47,15 +53,54 @@ interface Peer extends AsyncSocket {
     public function getLogger();
 
     /**
-     * Callback when a packet is received
-     * @param Packet $packet
+     * Return the peer version message as he sended it
+     * @return Version
      */
-    public function onPacket($packet);
+    public function getPeerVersion();
+
+    /**
+     * @return ConnectionEndPoint
+     */
+    public function getRemoteEndPoint();
+
+    /**
+     * Return true if a version packet was recieved
+     * @return int
+     */
+    public function isVersionRecieved();
+
+    /**
+     * Return true if a version packet was sent
+     * @return bool
+     */
+    public function isVersionSent();
 
 
     /**
-     * Return the height of the peer (given in the version message)
-     * @return int
+     * Set the peer version information
+     * @param Version $version
      */
-    public function getHeight();
-} 
+    public function setPeerVersion($version);
+
+    /**
+     * Send a version packet to the peer
+     */
+    public function sendVersionPacket();
+
+    /**
+     * Set the flag telling version packet was recived
+     */
+    public function setVersionRecieved();
+
+    /**
+     * Set the flag telling version packet was recived
+     */
+    public function setVersionSent();
+
+    /**
+     * Write a packet to the peer
+     * @param Packet $packet
+     */
+    public function writePacket($packet);
+}
+

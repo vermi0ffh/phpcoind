@@ -48,6 +48,12 @@ class Block implements Payload {
      */
     public $block_hash;
 
+
+    /**
+     * @var int
+     */
+    public $height;
+
     /**
      * Compute block hash
      * @param \PhpCoinD\Protocol\Component\BlockHeaderShort $block_header

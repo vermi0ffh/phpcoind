@@ -23,9 +23,10 @@
  * Created 31/03/14 16:05 by Aurélien RICHAUD
  */
 
-namespace PhpCoinD\Network;
+namespace PhpCoinD\Network\Socket;
 
 use Aza\Components\Socket\SocketStream;
+use PhpCoinD\Network\CoinPacketHandler;
 
 /**
  * Wrapper for asynchronous sockets
@@ -37,12 +38,16 @@ interface AsyncSocket {
      */
     public function onClose();
 
+    /**
+     * Get the packet handler for this socket
+     * @return CoinPacketHandler
+     */
+    public function getCoinNetworkConnector();
 
     /**
      * @return SocketStream
      */
     public function getSocket();
-
 
     /**
      * Get the low level socket

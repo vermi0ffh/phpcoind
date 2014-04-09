@@ -25,6 +25,8 @@
 
 namespace PhpCoinD\Protocol;
 
+use Monolog\Logger;
+use PhpCoinD\Network\CoinNetworkConnector;
 use PhpCoinD\Protocol\Component\Hash;
 use PhpCoinD\Protocol\Payload\Block;
 use PhpCoinD\Storage\Store;
@@ -35,15 +37,16 @@ use PhpCoinD\Storage\Store;
  */
 interface Network extends Blockchain {
     /**
+     * Register a new way to connect to the coin network
+     * @param CoinNetworkConnector $connector
+     */
+    public function addNetworkConnector($connector);
+
+    /**
      * Create the genesis block for the network
      * @return Block
      */
     public function createGenesisBlock();
-
-    /**
-     * @return Blockchain
-     */
-    public function getBlockchain();
 
     /**
      * The client version advertised
@@ -58,6 +61,11 @@ interface Network extends Blockchain {
     public function getGenesisBlockHash();
 
     /**
+     * @return Logger
+     */
+    public function getLogger();
+
+    /**
      * The magic value for packet header
      * @return int
      */
@@ -70,15 +78,23 @@ interface Network extends Blockchain {
     public function getNextCheckPoint();
 
     /**
+     * Get the current nonce
+     * @return int
+     */
+    public function getNonce();
+
+    /**
      * The protocol version
      * @return int
      */
     public function getProtocolVersion();
 
+
     /**
-     * @param Blockchain $blockchain
+     * Method used to do stuff needed for the network.
+     * This method should return "quickly" to prevent blocking of the other networks
      */
-    public function setBlockchain($blockchain);
+    public function run();
 
     /**
      * @param Store $store
