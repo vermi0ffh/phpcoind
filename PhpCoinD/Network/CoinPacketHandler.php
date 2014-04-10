@@ -71,4 +71,10 @@ interface CoinPacketHandler {
      * @param Packet $packet The packet
      */
     public function onPacketReceived($peer, $packet);
+
+    /**
+     * Method used to do stuff needed for the network.
+     * This method should return "quickly" to prevent blocking of the other networks
+     */
+    public function run();
 }

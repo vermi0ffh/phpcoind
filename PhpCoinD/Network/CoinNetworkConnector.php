@@ -27,6 +27,7 @@ namespace PhpCoinD\Network;
 use Monolog\Logger;
 use PhpCoinD\Network\Socket\Peer;
 use PhpCoinD\Protocol\Network;
+use PhpCoinD\Protocol\Packet;
 
 
 /**
@@ -64,4 +65,9 @@ interface CoinNetworkConnector {
      * This method should return "quickly" to prevent blocking of the other networks
      */
     public function run();
+
+    /**
+     * @param Packet $packet
+     */
+    public function writePacket($packet);
 } 

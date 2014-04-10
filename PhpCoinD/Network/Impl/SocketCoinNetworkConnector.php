@@ -26,8 +26,10 @@
 namespace PhpCoinD\Network\Impl;
 
 
+use Aza\Components\Socket\Exceptions\Exception;
 use Aza\Components\Socket\SocketStream;
 use Monolog\Logger;
+use PhpCoinD\Exception\PeerNotReadyException;
 use PhpCoinD\Network\CoinNetworkConnector;
 use PhpCoinD\Network\CoinPacketHandler;
 use PhpCoinD\Network\Socket\AsyncSocket;
@@ -35,6 +37,7 @@ use PhpCoinD\Network\Socket\Peer;
 use PhpCoinD\Network\Socket\Impl\SocketPeer;
 use PhpCoinD\Network\Socket\Impl\SocketServer;
 use PhpCoinD\Protocol\Network;
+use PhpCoinD\Protocol\Packet;
 
 class SocketCoinNetworkConnector implements CoinNetworkConnector {
     /**
@@ -274,5 +277,16 @@ class SocketCoinNetworkConnector implements CoinNetworkConnector {
         if ($peer_pos !== false) {
             $this->_peers = array_merge(array_slice($this->_peers, 0, $peer_pos), array_slice($this->_peers, $peer_pos+1));
         }
+    }
+
+    /**
+     * @param Packet $packet
+     * @throws \Exception
+     */
+    public function writePacket($packet) {
+        if (count($this->_peers) == 0) {
+            throw new \Exception("No peer ready");
+        }
+        $this->_peers[0]->writePacket($packet);
     }
 }

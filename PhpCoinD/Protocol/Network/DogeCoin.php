@@ -66,6 +66,12 @@ class DogeCoin implements Network {
      */
     protected $_store;
 
+    /**
+     * Flag : is the blockchain in sync ?
+     * @var bool
+     */
+    protected $_synchronized = false;
+
 
     /**
      * @param Logger $logger
@@ -150,7 +156,7 @@ class DogeCoin implements Network {
      * @return Block|null
      */
     public function getBlockByHash($hash) {
-        // TODO: Implement getBlockByHash() method.
+        return $this->getStore()->getBlockByHash($hash);
     }
 
     /**
@@ -191,7 +197,7 @@ class DogeCoin implements Network {
      * @return Block
      */
     public function getLastBlock() {
-        // TODO: Implement getLastBlock() method.
+        return $this->getStore()->getLastBlock();
     }
 
     /**
@@ -207,6 +213,13 @@ class DogeCoin implements Network {
      */
     public function getMagicValue() {
         return 0xc0c0c0c0;
+    }
+
+    /**
+     * @return \PhpCoinD\Network\CoinNetworkConnector[]
+     */
+    public function getNetworkConnectors() {
+        return $this->_network_connectors;
     }
 
     /**
@@ -239,6 +252,13 @@ class DogeCoin implements Network {
     }
 
     /**
+     * @return \PhpCoinD\Network\CoinPacketHandler
+     */
+    public function getPacketHandler() {
+        return $this->_packet_handler;
+    }
+
+    /**
      * The protocol version
      * @return int
      */
@@ -254,12 +274,21 @@ class DogeCoin implements Network {
     }
 
     /**
+     * @return boolean
+     */
+    public function getSynchronized() {
+        return $this->_synchronized;
+    }
+
+    /**
      * Check if a block is valid
      * @param Block $block
      * @return bool true is the block is valid, false is not or if the function can't answer
      */
     public function isBlockValid($block) {
-        // TODO: Implement isBlockValid() method.
+        $parent_block = $this->getBlockByHash($block->block_header->prev_block);
+
+        return ($parent_block != null);
     }
 
     /**
@@ -272,10 +301,7 @@ class DogeCoin implements Network {
             return;
         }
 
-        // Run every network connectors sending & receiving packets
-        foreach($this->_network_connectors as $network_connector) {
-            $network_connector->run();
-        }
+        $this->getPacketHandler()->run();
     }
 
     /**
@@ -284,5 +310,12 @@ class DogeCoin implements Network {
     public function setStore($store) {
         $this->_store = $store;
         $this->_store->initializeStore();
+    }
+
+    /**
+     * @param boolean $synchronized
+     */
+    public function setSynchronized($synchronized) {
+        $this->_synchronized = $synchronized;
     }
 }

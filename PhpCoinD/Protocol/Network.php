@@ -55,6 +55,11 @@ interface Network extends Blockchain {
     public function getClientVersion();
 
     /**
+     * @return \PhpCoinD\Network\CoinNetworkConnector[]
+     */
+    public function getNetworkConnectors();
+
+    /**
      * The binary representation of the genesis block
      * @return Hash
      */
@@ -91,6 +96,12 @@ interface Network extends Blockchain {
 
 
     /**
+     * A flag telling if the blockchain is sync or not
+     * @return boolean
+     */
+    public function getSynchronized();
+
+    /**
      * Method used to do stuff needed for the network.
      * This method should return "quickly" to prevent blocking of the other networks
      */
@@ -100,4 +111,11 @@ interface Network extends Blockchain {
      * @param Store $store
      */
     public function setStore($store);
+
+
+    /**
+     * Change the sync flag of the blockchain
+     * @param boolean $synchronized
+     */
+    public function setSynchronized($synchronized);
 } 
