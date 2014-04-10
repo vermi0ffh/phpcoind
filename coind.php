@@ -118,16 +118,6 @@ pcntl_signal(SIGTERM, function($signo) {
 
 /////////////////////////////////////////////////
 // Main loop
-$logger->addInfo("Connecting to bootstrap peers...");
-/*foreach($coin_networks as $coin_network) {
-    // TODO : Static bootstrap for dev only
-    $coin_network->bootstrap(array(
-        'tcp://127.0.0.1:22556',
-        'tcp://192.168.42.128:22556',
-    ));
-}*/
-
-
 $logger->addInfo("Entering main loop...");
 while(!$GLOBALS['shutdown']) {
     $start = microtime(true);

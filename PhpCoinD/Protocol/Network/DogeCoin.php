@@ -283,5 +283,6 @@ class DogeCoin implements Network {
      */
     public function setStore($store) {
         $this->_store = $store;
+        $this->_store->initializeStore();
     }
 }

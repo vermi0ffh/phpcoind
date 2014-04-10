@@ -29,7 +29,8 @@ use Aza\Components\Socket\SocketStream;
 use Exception;
 use Monolog\Logger;
 use PhpCoinD\Exception\PeerNotReadyException;
-use PhpCoinD\Network\CoinPacketHandler;
+use PhpCoinD\Network\Impl\SocketCoinNetworkConnector;
+use PhpCoinD\Network\Socket\AsyncSocket;
 use PhpCoinD\Network\Socket\Peer;
 use PhpCoinD\Protocol\Component\NetworkAddress;
 use PhpCoinD\Protocol\Network;
@@ -39,16 +40,16 @@ use PhpCoinD\Protocol\Util\Impl\NetworkSerializer;
 use PhpCoinD\Exception\StreamException;
 use PhpCoinD\Network\ConnectionEndPoint;
 
-class SocketPeer implements Peer {
+class SocketPeer implements Peer, AsyncSocket {
     /**
      * 1 Mb recv buffer size
      */
     const MAX_RECV_BUFFER_SIZE = 1048576;
 
     /**
-     * @var CoinPacketHandler
+     * @var SocketCoinNetworkConnector
      */
-    protected $_coin_packet_handler;
+    protected $_coin_network_connector;
 
     /**
      * @var ConnectionEndPoint
@@ -102,22 +103,31 @@ class SocketPeer implements Peer {
 
 
     /////////////////////////////////////////////
-    // Protected methods
-
+    // static methods
+    /**
+     * Connect to a new peer
+     *
+     * @param SocketCoinNetworkConnector $coin_network_connector
+     * @param string $url
+     * @return SocketPeer
+     */
+    public static function connect($coin_network_connector, $url) {
+        return new SocketPeer($coin_network_connector, SocketStream::client($url));
+    }
 
 
     /////////////////////////////////////////////
     // Constructor
     /**
-     * @param CoinPacketHandler $coin_packet_handler
+     * @param SocketCoinNetworkConnector $coin_network_connector
      * @param SocketStream $socket
      */
-    public function __construct($coin_packet_handler, $socket) {
-        $this->_coin_packet_handler = $coin_packet_handler;
+    public function __construct($coin_network_connector, $socket) {
+        $this->_coin_network_connector = $coin_network_connector;
         $this->_socket = $socket;
         $this->_serializer = new NetworkSerializer();
 
-        // Instanciate endpoints
+        // Instantiate endpoints
         $this->_local_end_point = new ConnectionEndPoint();
         $this->_remote_end_point = new ConnectionEndPoint();
 
@@ -135,14 +145,16 @@ class SocketPeer implements Peer {
         // No buffers on socket (buffer is handler manually)
         $this->getSocket()->setReadBuffer(0);
         $this->getSocket()->setWriteBuffer(0);
+
+        $this->getCoinNetworkConnector()->getCoinPacketHandler()->onPeerConnect($this);
     }
 
     /**
      * Get the packet handler for this socket
-     * @return CoinPacketHandler
+     * @return SocketCoinNetworkConnector
      */
     public function getCoinNetworkConnector() {
-        return $this->_coin_packet_handler;
+        return $this->_coin_network_connector;
     }
 
     /**
@@ -238,7 +250,10 @@ class SocketPeer implements Peer {
     public function sendVersionPacket() {
         $network = $this->getCoinNetworkConnector()->getNetwork();
 
-        $version_packet = $this->getCoinNetworkConnector()->createPacket('version');
+        $version_packet = $this->getCoinNetworkConnector()->getCoinPacketHandler()->createPacket('version');
+        if (!($version_packet->payload instanceof Version)) {
+            throw new Exception("Payload type mismatch");
+        }
         $version_packet->payload->version = $network->getProtocolVersion();
         $version_packet->payload->services = 0x1;
         $version_packet->payload->timestamp = time();
@@ -281,7 +296,7 @@ class SocketPeer implements Peer {
      * Callback called when socket is closed
      */
     public function onClose() {
-        // Peer is closed
+        $this->getCoinNetworkConnector()->onPeerClose($this);
     }
 
     /**
@@ -293,7 +308,7 @@ class SocketPeer implements Peer {
 
         // Nothing read ? We have nothing to do then...
         if (is_string($data) && strlen($data) == 0) {
-            return;
+            throw new Exception("Empty read !");
         }
 
         // Append data to the buffer
@@ -325,7 +340,7 @@ class SocketPeer implements Peer {
                 $this->_recv_buffer = substr($this->_recv_buffer, ftell($buffered_stream));
 
                 // Handle the new packet
-                $this->getCoinNetworkConnector()->onPacketReceived($this, $packet);
+                $this->getCoinNetworkConnector()->getCoinPacketHandler()->onPacketReceived($this, $packet);
             }
         } catch (StreamException $e) {
             // No more packet !

@@ -86,7 +86,7 @@ class MongoStore implements Store {
         }
 
         // Compute block height
-        if ($bloc->block_hash->value == $this->getNetwork()->getGenesisBlockHash()) {
+        if ($bloc->block_hash->value == $this->getNetwork()->getGenesisBlockHash()->value) {
             $bloc->height = 0;
         } else {
             // Get the parent-block height
@@ -102,6 +102,7 @@ class MongoStore implements Store {
         // Transform the Block object into a BSON object
         $mongo_block = $this->_object_transformer->toMongo($bloc);
         $mongo_block['_id'] = bin2hex($bloc->block_hash->value);
+        $mongo_block['height'] = $bloc->height;
 
         try {
             $this->getMongoDb()->selectCollection(self::BLOCK_COLLECTION)
@@ -193,7 +194,7 @@ class MongoStore implements Store {
             ->find()
             ->sort(array('height' => -1))
             ->limit(1)
-            ->current();
+            ->getNext();
 
         // No block found
         if ($block == null) {
@@ -201,11 +202,8 @@ class MongoStore implements Store {
             return -1;
         }
 
-        /** @var $bloc Block Get the object back from the mongo bson object */
-        $bloc = $this->_object_transformer->fromMongo($block);
-
         // Return the height of the last block
-        return $bloc->height;
+        return $block['height'];
     }
 
     /**

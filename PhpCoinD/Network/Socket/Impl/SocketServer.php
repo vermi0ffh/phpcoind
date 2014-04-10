@@ -26,7 +26,6 @@
 namespace PhpCoinD\Network\Socket\Impl;
 
 use Aza\Components\Socket\SocketStream;
-use PhpCoinD\Network\CoinPacketHandler;
 use PhpCoinD\Network\Impl\SocketCoinNetworkConnector;
 use PhpCoinD\Network\Socket\AsyncSocket;
 
@@ -70,7 +69,9 @@ class SocketServer implements AsyncSocket {
      */
     public function onRead() {
         // Add a new peer to the coin network
-        $this->getCoinNetworkConnector()->onPeerAccept( new SocketPeer($this->getCoinNetworkConnector(), $this->getSocket()->accept()) );
+        $this->getCoinNetworkConnector()->onPeerAccept(
+            new SocketPeer($this->getCoinNetworkConnector(), $this->getSocket()->accept())
+        );
     }
 
     /**
@@ -81,7 +82,7 @@ class SocketServer implements AsyncSocket {
     }
 
     /**
-     * @return CoinPacketHandler
+     * @return SocketCoinNetworkConnector
      */
     public function getCoinNetworkConnector() {
         return $this->_coin_network_connector;

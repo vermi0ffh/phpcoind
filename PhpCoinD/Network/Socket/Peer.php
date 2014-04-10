@@ -35,7 +35,7 @@ use PhpCoinD\Protocol\Payload\Version;
  * A connection with a peer on a coin network
  * @package PhpCoinD\Network
  */
-interface Peer extends AsyncSocket {
+interface Peer {
     /**
      * Return the height of the peer (given in the version message)
      * @return int

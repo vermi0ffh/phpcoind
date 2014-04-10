@@ -61,6 +61,7 @@ class DefaultPacketHandler implements CoinPacketHandler {
      */
     public function createPacket($command) {
         $packet = new Packet();
+        $packet->header->magic = $this->getNetwork()->getMagicValue();
         $packet->header->command = $command;
 
         $payload_class = $packet->getPayloadClassName();

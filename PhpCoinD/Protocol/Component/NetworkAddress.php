@@ -180,6 +180,7 @@ class NetworkAddress {
     public static function fromString($ip, $port) {
         $ret = new self();
 
+        $ret->services = 1;
         $ret->setParsedIp($ip);
         $ret->port = $port;
 

@@ -63,6 +63,24 @@ class SocketCoinNetworkConnector implements CoinNetworkConnector {
 
 
     /**
+     * Connect to network peers
+     */
+    protected function bootstrap() {
+        if (count($this->_peers) == 0) {
+            // TODO : Remove this for production
+            $defaults_peers = array(
+                'tcp://127.0.0.1:22556',
+            );
+
+            // Connect to peers
+            foreach($defaults_peers as $peer_url) {
+                $this->_peers[] = SocketPeer::connect($this, $peer_url);
+            }
+        }
+    }
+
+
+    /**
      * @param CoinPacketHandler $coin_packet_handler
      * @param string[] $binds
      */
@@ -123,18 +141,8 @@ class SocketCoinNetworkConnector implements CoinNetworkConnector {
      * This method should return "quickly" to prevent blocking of the other networks
      */
     public function run() {
-        if (count($this->_peers) == 0) {
-            // TODO : Remove this for production
-            $defaults_peers = array(
-                'tcp://127.0.0.1:22556',
-                //'tcp://192.168.42.128:22556',
-            );
-            foreach($defaults_peers as $peer_url) {
-                $peer = new SocketPeer($this->getCoinPacketHandler(), SocketStream::client($peer_url));
-                $this->getCoinPacketHandler()->onPeerConnect($peer);
-                $this->_peers[] = $peer;
-            }
-        }
+        // Connect to peers
+        $this->bootstrap();
 
 
         /** @var $network_sockets AsyncSocket[] */
@@ -182,8 +190,6 @@ class SocketCoinNetworkConnector implements CoinNetworkConnector {
                     /** @var $sockets_object AsyncSocket */
                     $sockets_object = $sockets_objects[$socket_id];
                     $sockets_object->onRead();
-
-                    var_dump($sockets_object);
                 }
             }
 
@@ -252,6 +258,21 @@ class SocketCoinNetworkConnector implements CoinNetworkConnector {
         // Bind new sockets
         foreach($this->getBinds() as $bind_url) {
             $this->_server_sockets[] = new SocketServer($this, SocketStream::server($bind_url));
+        }
+    }
+
+    /**
+     * Callback when a peer closed connection
+     * @param SocketPeer $peer
+     */
+    public function onPeerClose($peer) {
+        $peer->getSocket()->close();
+
+        $peer_pos = array_search($peer, $this->_peers);
+
+        // Remove the peer from the inner array
+        if ($peer_pos !== false) {
+            $this->_peers = array_merge(array_slice($this->_peers, 0, $peer_pos), array_slice($this->_peers, $peer_pos+1));
         }
     }
 }
