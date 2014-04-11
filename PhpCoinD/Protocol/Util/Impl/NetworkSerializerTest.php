@@ -44,7 +44,7 @@ class NetworkSerializerTest extends PHPUnit_Framework_TestCase{
     public function setUp() {
         $this->network_transformer = new NetworkSerializer();
         // Use DogeCoin genesis block for testing
-        $this->network = new DogeCoin();
+        $this->network = new DogeCoin(null, false);
     }
 
     public function testTransformation() {

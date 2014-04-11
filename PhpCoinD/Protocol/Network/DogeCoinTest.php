@@ -35,7 +35,7 @@ class DogeCoinTest extends PHPUnit_Framework_TestCase {
 
 
     public function setUp() {
-        $this->network = new DogeCoin();
+        $this->network = new DogeCoin(null, false);
     }
 
 
@@ -44,6 +44,6 @@ class DogeCoinTest extends PHPUnit_Framework_TestCase {
      */
     public function testGenesisBlock() {
         $genesis_block = $this->network->createGenesisBlock();
-        $this->assertTrue($genesis_block->block_hash->value == $this->network->getGenesisBlockHash());
+        $this->assertTrue($genesis_block->block_hash->value == $this->network->getGenesisBlockHash()->value);
     }
 }

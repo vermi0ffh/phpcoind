@@ -75,8 +75,9 @@ class DogeCoin implements Network {
 
     /**
      * @param Logger $logger
+     * @param bool $default_connectors
      */
-    public function __construct($logger) {
+    public function __construct($logger, $default_connectors=true) {
         $this->_logger = $logger;
         $this->_nonce = rand(0, PHP_INT_MAX);
 
@@ -84,7 +85,14 @@ class DogeCoin implements Network {
         $this->_packet_handler = new DefaultPacketHandler($this);
         // Init connectors
         $this->_network_connectors = array();
-        $this->addNetworkConnector(new SocketCoinNetworkConnector($this->_packet_handler));
+        if ($default_connectors) {
+            $this->addNetworkConnector(new SocketCoinNetworkConnector($this->_packet_handler));
+        }
+    }
+
+    public function __destruct() {
+        $this->_packet_handler = null;
+        $this->_network_connectors = array();
     }
 
 

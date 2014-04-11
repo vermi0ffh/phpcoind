@@ -26,10 +26,8 @@
 namespace PhpCoinD\Network\Impl;
 
 
-use Aza\Components\Socket\Exceptions\Exception;
 use Aza\Components\Socket\SocketStream;
 use Monolog\Logger;
-use PhpCoinD\Exception\PeerNotReadyException;
 use PhpCoinD\Network\CoinNetworkConnector;
 use PhpCoinD\Network\CoinPacketHandler;
 use PhpCoinD\Network\Socket\AsyncSocket;
@@ -60,7 +58,7 @@ class SocketCoinNetworkConnector implements CoinNetworkConnector {
     /**
      * All server sockets
      * @see $_binds
-     * @var SocketStream[]
+     * @var SocketServer[]
      */
     protected $_server_sockets = array();
 
@@ -91,6 +89,17 @@ class SocketCoinNetworkConnector implements CoinNetworkConnector {
         $this->_coin_packet_handler = $coin_packet_handler;
         $this->setBinds($binds);
         $this->_peers = array();
+    }
+
+    public function __destruct() {
+        foreach($this->_server_sockets as $socket) {
+            $socket->getSocket()->close();
+        }
+
+        /** @var $peer SocketPeer */
+        foreach($this->_peers as $peer) {
+            $peer->getSocket()->close();
+        }
     }
 
 
