@@ -71,6 +71,13 @@ interface Writer {
     function write_uint32($stream, $int);
 
     /**
+     * Write a 32bit big endian int
+     * @param resource $stream
+     * @param int $int
+     */
+    function write_uint32be($stream, $int);
+
+    /**
      * Write a 64bit little endian int
      * @param resource $stream
      * @param int $int

@@ -33,8 +33,8 @@ class TxIn {
     public $outpoint;
 
     /**
-     * @PhpCoinD\Annotation\Serializable(type = "string")
-     * @var string
+     * @PhpCoinD\Annotation\Serializable(type = "PhpCoinD\Protocol\Component\CScript")
+     * @var CScript
      */
     public $signature;
 

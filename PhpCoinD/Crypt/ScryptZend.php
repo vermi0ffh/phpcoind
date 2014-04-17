@@ -8,7 +8,7 @@
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- *
+ * 
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
  *
@@ -20,37 +20,18 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  *
- * Created 31/03/14 16:05 by Aurélien RICHAUD
+ * Created 12/04/14 12:10 by Aurélien RICHAUD
  */
 
-namespace PhpCoinD\Protocol\Network;
+namespace PhpCoinD\Crypt;
+use Zend\Crypt\Key\Derivation\Scrypt;
 
-use PHPUnit_Framework_TestCase;
-
-class DogeCoinTest extends PHPUnit_Framework_TestCase {
-    /**
-     * @var DogeCoin
-     */
-    protected $network;
-
-
-    public function setUp() {
-        $this->network = new DogeCoin(null, false);
-    }
-
-
-    /**
-     * Test integrity of the genesis block
-     */
-    public function testGenesisBlock() {
-        $genesis_block = $this->network->createGenesisBlock();
-        $this->assertEquals($genesis_block->block_hash->value, $this->network->getGenesisBlockHash()->value);
-
-        // Test du hash de la transaction de base
-        $this->assertEquals($genesis_block->tx[0]->getHash()->value, hex2bin('696ad20e2dd4365c7459b4a4a5af743d5e92c6da3229e6532cd605f6533f2a5b'));
-
-        // Test the block hasher
-        //$genesis_block_merkle_root = $this->network->getBlockHasher()->hashBlock($genesis_block);
-        //$this->assertEquals($genesis_block->block_header->merkle_root->value, $genesis_block_merkle_root->value);
+/**
+ * Scrypt using Zend Framework
+ * @package PhpCoinD\Crypt
+ */
+class ScryptZend implements BlockHashFunc {
+    public function hasher($data) {
+        return Scrypt::calc($data, $data, 1024, 1, 1, 32);
     }
 }

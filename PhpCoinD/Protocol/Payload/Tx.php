@@ -25,9 +25,12 @@
 
 namespace PhpCoinD\Protocol\Payload;
 
+use PhpCoinD\Protocol\Component\Hash;
 use PhpCoinD\Protocol\Component\TxIn;
 use PhpCoinD\Protocol\Component\TxOut;
 use PhpCoinD\Protocol\Packet\Payload;
+use PhpCoinD\Protocol\Util\Impl\DSha256ChecksumComputer;
+use PhpCoinD\Protocol\Util\Impl\NetworkSerializer;
 
 class Tx implements Payload {
     /**
@@ -53,6 +56,13 @@ class Tx implements Payload {
      * @var int
      */
     public $lock_time;
+
+
+    /**
+     * Hash of the transaction
+     * @var Hash
+     */
+    protected $hash;
 
 
     /**
@@ -82,5 +92,31 @@ class Tx implements Payload {
 
         // Add the new input transaction
         $this->tx_out[] = $tx_out;
+    }
+
+    /**
+     * @return \PhpCoinD\Protocol\Component\Hash
+     */
+    public function getHash() {
+        // Compute the hash if needed
+        if ($this->hash == null) {
+            // A stream for object serialization
+            $stream = fopen('php://memory', 'r+');
+
+            $network_serializer = new NetworkSerializer();
+            $network_serializer->write_object($stream, $this);
+            $checksummer = new DSha256ChecksumComputer();
+
+            fseek($stream, 0);
+
+            // Compute transaction hash
+            $tx_hash = $checksummer->hash(stream_get_contents($stream));
+
+            $this->hash = new Hash($tx_hash);
+
+            fclose($stream);
+        }
+
+        return $this->hash;
     }
 } 

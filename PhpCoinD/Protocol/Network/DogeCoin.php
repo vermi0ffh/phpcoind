@@ -26,11 +26,15 @@
 namespace PhpCoinD\Protocol\Network;
 
 use Monolog\Logger;
+use PhpCoinD\Crypt\BlockHasher;
+use PhpCoinD\Crypt\ScryptZend;
 use PhpCoinD\Network\CoinNetworkConnector;
 use PhpCoinD\Network\CoinPacketHandler;
 use PhpCoinD\Network\Impl\DefaultPacketHandler;
 use PhpCoinD\Network\Impl\SocketCoinNetworkConnector;
+use PhpCoinD\Protocol\BigNum\BigNumBCMath;
 use PhpCoinD\Protocol\Component\BlockHeaderShort;
+use PhpCoinD\Protocol\Component\CScript;
 use PhpCoinD\Protocol\Component\Hash,
     PhpCoinD\Protocol\Component\OutPoint,
     PhpCoinD\Protocol\Component\TxIn,
@@ -41,6 +45,11 @@ use PhpCoinD\Protocol\Payload\Block,
 use PhpCoinD\Storage\Store;
 
 class DogeCoin implements Network {
+    /**
+     * @var BlockHasher
+     */
+    protected $_block_hasher;
+
     /**
      * @var Logger
      */
@@ -88,6 +97,10 @@ class DogeCoin implements Network {
         if ($default_connectors) {
             $this->addNetworkConnector(new SocketCoinNetworkConnector($this->_packet_handler));
         }
+
+        // Prepare the block hasher
+        $this->_block_hasher = new BlockHasher();
+        $this->_block_hasher->setHashFunc(new ScryptZend());
     }
 
     public function __destruct() {
@@ -133,19 +146,32 @@ class DogeCoin implements Network {
 
         // Transaction
         $tx = new Tx();
-        $tx->version = 2;
+        $tx->version = 1;
 
         // Input transaction
         $tx_in = new TxIn();
         $tx_in->outpoint = new OutPoint();
         $tx_in->outpoint->hash = new Hash(hex2bin('0000000000000000000000000000000000000000000000000000000000000000'));
         $tx_in->outpoint->index = 486604799;
+        $tx_in->signature = new CScript();
+        // TODO : Check signature generation
+        $tmp_bignum = new BigNumBCMath();
+        $tmp_bignum->fromInt(4);
+        $tx_in->signature->addElement(486604799);
+        $tx_in->signature->addElement($tmp_bignum);
+        $tx_in->signature->addElement('Nintondo');
+        $tx_in->sequence = 0xffffffff;
+
+        //CScript() << 486604799 << CBigNum(4) << vector<unsigned char>((const unsigned char*)pszTimestamp, (const unsigned char*)pszTimestamp + strlen(pszTimestamp));
+        //CTxIn(COutPoint(0000000000000000000000000000000000000000000000000000000000000000, 4294967295), coinbase 04ffff001d0104084e696e746f6e646f)
+        //
 
         // Output transaction
         $tx_out = new TxOut();
         $tx_out->value = 88 * 100000000;
         $tx_out->pk_script = hex2bin('040184710fa689ad5023690c80f3a49c8f13f8d45b8c857fbcbc8bc4a8e4d3eb4b10f4d4604fa08dce601aaf0f470216fe1b51850b4acf21b179c45070ac7b03a9');
 
+        // Add input/output to transaction
         $tx->addTxIn($tx_in);
         $tx->addTxOut($tx_out);
 
@@ -174,6 +200,14 @@ class DogeCoin implements Network {
      */
     public function getBlockByHeight($height) {
         // TODO: Implement getBlockByHeight() method.
+    }
+
+    /**
+     * Get the block hasher for this coin network
+     * @return BlockHasher
+     */
+    public function getBlockHasher() {
+        return $this->_block_hasher;
     }
 
     /**

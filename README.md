@@ -6,7 +6,8 @@ with XXXCoins networks.
 
 ## PHP Requirements
 
-At least **php 5.4** is needed, with **socket support**.
+At least **php 5.4** is needed, with **socket support**. Only **64 bits** versions of php are supported, 32 bits may leads to errors.
+**BCMath** or **GMP** must be present (at least one).
 Composer is required for dependencies handling
 
 

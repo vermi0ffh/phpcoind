@@ -66,13 +66,19 @@ interface Reader {
      */
     function read_uint16be($stream);
 
-
     /**
      * Read a 32bit little endian int
      * @param resource $stream
      * @return int
      */
     function read_uint32($stream);
+
+    /**
+     * Read a 32bit big endian int
+     * @param resource $stream
+     * @return int
+     */
+    function read_uint32be($stream);
 
     /**
      * Read a 64bit little endian int

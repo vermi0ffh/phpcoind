@@ -42,21 +42,25 @@ class ObjectTransformerTest extends PHPUnit_Framework_TestCase {
     protected $network;
 
     public function setUp() {
-        $this->object_transformer = new ObjectTransformer();
-        // Use DogeCoin genesis block for testing
-        $this->network = new DogeCoin(null, false);
+        if (class_exists('MongoDB')) {
+            $this->object_transformer = new ObjectTransformer();
+            // Use DogeCoin genesis block for testing
+            $this->network = new DogeCoin(null, false);
+        }
     }
 
     public function testTransformation() {
-        $genesis_block = $this->network->createGenesisBlock();
+        if (class_exists('MongoDB')) {
+            $genesis_block = $this->network->createGenesisBlock();
 
-        $genesis_block_mongoed = $this->object_transformer->fromMongo($this->object_transformer->toMongo($genesis_block));
+            $genesis_block_mongoed = $this->object_transformer->fromMongo($this->object_transformer->toMongo($genesis_block));
 
-        // Test class
-        $this->assertTrue($genesis_block_mongoed instanceof Block);
-        $this->assertTrue(get_class($genesis_block) == get_class($genesis_block_mongoed));
+            // Test class
+            $this->assertTrue($genesis_block_mongoed instanceof Block);
+            $this->assertTrue(get_class($genesis_block) == get_class($genesis_block_mongoed));
 
-        // Test computed hash
-        $this->assertTrue($genesis_block->block_hash == $genesis_block_mongoed->block_hash);
+            // Test computed hash
+            $this->assertTrue($genesis_block->block_hash == $genesis_block_mongoed->block_hash);
+        }
     }
 } 

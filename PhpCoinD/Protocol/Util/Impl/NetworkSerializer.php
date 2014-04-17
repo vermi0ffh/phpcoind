@@ -136,6 +136,23 @@ class NetworkSerializer extends AnnotatorObjectSerializer {
     }
 
     /**
+     * Read a 32bit big endian int
+     * @param resource $stream
+     * @throws StreamException
+     * @return int
+     */
+    function read_uint32be($stream) {
+        $ret = fread($stream, 4);
+
+        if (strlen($ret) != 4) {
+            throw new StreamException();
+        }
+
+        $ret = unpack('N', $ret); // 32 bits unsigned integer little endian
+        return $ret[1];
+    }
+
+    /**
      * Read a 64bit little endian int
      * @param resource $stream
      * @throws StreamException
@@ -293,6 +310,15 @@ class NetworkSerializer extends AnnotatorObjectSerializer {
      */
     function write_uint32($stream, $int) {
         fwrite($stream, pack('V', $int));
+    }
+
+    /**
+     * Write a 32bit big endian int
+     * @param resource $stream
+     * @param int $int
+     */
+    function write_uint32be($stream, $int) {
+        fwrite($stream, pack('N', $int));
     }
 
     /**

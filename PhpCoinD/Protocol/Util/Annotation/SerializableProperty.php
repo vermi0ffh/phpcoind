@@ -40,7 +40,7 @@ class SerializableProperty extends ReflectionAnnotatedProperty {
      * @param mixed $object
      * @return mixed
      */
-    public function getValue($object) {
+    public function getValue($object = null) {
         $getValueFuncName = 'get' . $this->propertyNameTransformed();
 
         // Call the getXXX method
@@ -87,7 +87,7 @@ class SerializableProperty extends ReflectionAnnotatedProperty {
      * @param object $object
      * @param mixed $value
      */
-    public function setValue($object, $value) {
+    public function setValue($object, $value = null) {
         $setValueFuncName = 'set' . $this->propertyNameTransformed();
 
         // Call the getXXX method

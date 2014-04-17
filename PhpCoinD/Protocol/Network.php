@@ -26,6 +26,7 @@
 namespace PhpCoinD\Protocol;
 
 use Monolog\Logger;
+use PhpCoinD\Crypt\BlockHasher;
 use PhpCoinD\Network\CoinNetworkConnector;
 use PhpCoinD\Protocol\Component\Hash;
 use PhpCoinD\Protocol\Payload\Block;
@@ -58,6 +59,12 @@ interface Network extends Blockchain {
      * @return \PhpCoinD\Network\CoinNetworkConnector[]
      */
     public function getNetworkConnectors();
+
+    /**
+     * Get the block hasher for this coin network
+     * @return BlockHasher
+     */
+    public function getBlockHasher();
 
     /**
      * The binary representation of the genesis block
