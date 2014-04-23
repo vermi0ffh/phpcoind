@@ -4,10 +4,10 @@
 	"keywords": [
 		"bitcoin", "litecoin", "dogecoin", "altcoin", "client", "server"
 	],
-	"homepage": "https://github.com/",
+	"homepage": "https://github.com/vermi0ffh/phpcoind",
 	"license": "MIT",
 	"support": {
-		"issues": "https://github.com/Anizoptera/AzaSocket/issues"
+		"issues": "https://github.com/vermi0ffh/phpcoind/issues"
 	},
 	"authors": [
 		{"name": "Aurélien RICHAUD", "email": "aurelien.richaud@btoweb.fr", "homepage": "https://github.com/vermi0ffh/"}
