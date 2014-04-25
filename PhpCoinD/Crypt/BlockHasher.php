@@ -94,6 +94,12 @@ class BlockHasher {
      * @return Hash
      */
     public function hashBlock($block) {
+        if (count($block->tx) == 1) {
+            // Easy one : This merkle tree has only a root !
+            return $block->tx[0]->getHash();
+        }
+
+        // Create a fixed size Merkle Tree
         $tree = new FixedSizeTree(count($block->tx) + (count($block->tx) % 2), array($this, 'computeHash'), array($this, 'setRootHash'));
         $last_tx_hash = null;
 
@@ -105,11 +111,12 @@ class BlockHasher {
             $tree->set($i, $last_tx_hash->value);
         }
 
-        // Check if we need to repeat the last hash !
+        // Check if we need to repeat the last hash (odd number of transactions)
         if (count($block->tx) % 2) {
             $tree->set(count($block->tx), $last_tx_hash->value);
         }
 
+        // Get the root hash of the merkle tree
         return $this->getRootHash();
     }
 

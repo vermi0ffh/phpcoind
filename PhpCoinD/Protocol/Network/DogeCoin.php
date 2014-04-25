@@ -322,10 +322,17 @@ class DogeCoin implements Network {
     /**
      * Check if a block is valid
      * @param Block $block
+     * @throws \Exception
      * @return bool true is the block is valid, false is not or if the function can't answer
      */
     public function isBlockValid($block) {
         $parent_block = $this->getBlockByHash($block->block_header->prev_block);
+
+        $merkle_root = $this->_block_hasher->hashBlock($block);
+        if ($merkle_root->value != $block->block_header->merkle_root->value) {
+            $this->getLogger()->addWarning("Merkle root is not valid for block " . bin2hex($block->block_hash->value) ." : " . bin2hex($merkle_root) . ' != ' . bin2hex($block->block_header->merkle_root->value));
+            return false;
+        }
 
         return ($parent_block != null);
     }
