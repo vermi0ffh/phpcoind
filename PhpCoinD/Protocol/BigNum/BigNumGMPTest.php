@@ -28,26 +28,26 @@ namespace PhpCoinD\Protocol\BigNum;
 
 use PHPUnit_Framework_TestCase;
 
-class BigNumBCMathTest extends PHPUnit_Framework_TestCase {
+class BigNumGMPTest extends PHPUnit_Framework_TestCase {
     public function testConstructor() {
         // Test with 0
-        $test = new BigNumBCMath(0);
+        $test = new BigNumGMP(0);
         $this->assertEquals($test->toUint256(), hex2bin('0000000000000000000000000000000000000000000000000000000000000000'));
 
         // Test with $nSize < 3
-        $test = new BigNumBCMath(0x020fedc0);
+        $test = new BigNumGMP(0x020fedc0);
         $this->assertEquals($test->toUint256(), hex2bin('0000000000000000000000000000000000000000000000000000000000000fed'));
 
         // Test with $nSize = 3
-        $test = new BigNumBCMath(0x030fedc0);
+        $test = new BigNumGMP(0x030fedc0);
         $this->assertEquals($test->toUint256(), hex2bin('00000000000000000000000000000000000000000000000000000000000fedc0'));
 
         // Test with $nSize > 3
-        $test = new BigNumBCMath(0x040fedc0);
+        $test = new BigNumGMP(0x040fedc0);
         $this->assertEquals($test->toUint256(), hex2bin('000000000000000000000000000000000000000000000000000000000fedc000'));
 
         // Test with DogeCoin genesis block
-        $test = new BigNumBCMath(0x1e0ffff0);
+        $test = new BigNumGMP(0x1e0ffff0);
         $this->assertTrue(strcmp($test->toUint256(), hex2bin('9156352c1818b32e90c9e792efd6a11a82fe7956a630f03bbee236cedae3911a')) < 0);
     }
 } 

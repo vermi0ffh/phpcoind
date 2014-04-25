@@ -20,21 +20,16 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  *
- * Created 31/03/14 16:05 by Aurélien RICHAUD
+ * Created 25/04/14 12:01 by Aurélien RICHAUD
  */
 
-namespace PhpCoinD\Protocol\Component;
+namespace PhpCoinD\Exception;
 
-class TxOut {
-    /**
-     * @PhpCoinD\Annotation\Serializable(type = "uint64")
-     * @var int
-     */
-    public $value;
 
-    /**
-     * @PhpCoinD\Annotation\Serializable(type = "PhpCoinD\Protocol\Component\CScript")
-     * @var CScript
-     */
-    public $pk_script;
+use Exception;
+
+class CScriptNotValid extends Exception {
+    public function __construct() {
+        parent::__construct("CScrypt is not valid");
+    }
 } 

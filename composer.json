@@ -24,9 +24,12 @@
         "aza/socket" : "1.0.2",
         "pleonasm/merkle-tree": "1.0.0",
         "monolog/monolog": "1.7.0",
-        "phpunit/phpunit": "4.0.*",
-        "zendframework/zend-crypt": "2.*"
+        "zendframework/zend-crypt": "2.*",
+        "xqus/phpecc": "dev-master"
 	},
+    "require-dev": {
+        "phpunit/phpunit": "4.0.*"
+    },
     "autoload": {
         "psr-4": {
             "PhpCoinD\\": "PhpCoinD/"

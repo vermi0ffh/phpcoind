@@ -193,8 +193,10 @@ class DefaultPacketHandler implements CoinPacketHandler {
         /////////////////////////////////////////
         // Blockchain sync
         if (!$this->getNetwork()->getSynchronized()) {
+            if (!$this->_waiting_headers && count($this->_sync_headers) == 0) {
+                /////////////////////////////////
+                // We need to request more headers
 
-            if (!$this->_waiting_headers) {
                 $last_block = $this->getNetwork()->getLastBlock();
 
                 $getheaders_packet = $this->createPacket('getheaders');
@@ -215,7 +217,7 @@ class DefaultPacketHandler implements CoinPacketHandler {
                 }
             } else if (count($this->_sync_headers) > 0 && count($this->_waited_block) == 0) {
                 /////////////////////////////////////
-                // Handle block headers
+                // Handle block headers : request block content
                 $getdata_packet = $this->createPacket('getdata');
                 if (!($getdata_packet->payload instanceof GetData)) {
                     throw new Exception("Payload type mismatch");

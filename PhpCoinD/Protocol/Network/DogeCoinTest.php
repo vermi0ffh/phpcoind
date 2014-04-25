@@ -44,13 +44,13 @@ class DogeCoinTest extends PHPUnit_Framework_TestCase {
      */
     public function testGenesisBlock() {
         $genesis_block = $this->network->createGenesisBlock();
-        $this->assertEquals($genesis_block->block_hash->value, $this->network->getGenesisBlockHash()->value);
+        $this->assertEquals($genesis_block->block_hash->value, $this->network->getGenesisBlockHash()->value, "Error while computing Block hash");
 
         // Test du hash de la transaction de base
-        $this->assertEquals($genesis_block->tx[0]->getHash()->value, hex2bin('696ad20e2dd4365c7459b4a4a5af743d5e92c6da3229e6532cd605f6533f2a5b'));
+        $this->assertEquals($genesis_block->tx[0]->getHash()->value, hex2bin('696ad20e2dd4365c7459b4a4a5af743d5e92c6da3229e6532cd605f6533f2a5b'), "Error while computing transaction hash");
 
         // Test the block hasher
-        //$genesis_block_merkle_root = $this->network->getBlockHasher()->hashBlock($genesis_block);
-        //$this->assertEquals($genesis_block->block_header->merkle_root->value, $genesis_block_merkle_root->value);
+        $genesis_block_merkle_root = $this->network->getBlockHasher()->hashBlock($genesis_block);
+        $this->assertEquals($genesis_block->block_header->merkle_root->value, $genesis_block_merkle_root->value, "Error while computing Merkle Root");
     }
 }

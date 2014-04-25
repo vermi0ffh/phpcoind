@@ -29,7 +29,7 @@ namespace PhpCoinD\Protocol\BigNum;
 use PhpCoinD\Protocol\BigNum;
 use PhpCoinD\Protocol\Util\Impl\AnnotatorObjectSerializer;
 
-class BigNumBCMath implements BigNum {
+class BigNumGMP implements BigNum {
     protected $_bc_math_number;
 
     /**

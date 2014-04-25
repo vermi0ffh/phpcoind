@@ -3,7 +3,7 @@
         "This file locks the dependencies of your project to a known state",
         "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file"
     ],
-    "hash": "28e0cb7b14f54241d44ee648f9c48e19",
+    "hash": "15a77ebf9190e1a209cdea9930efc6f3",
     "packages": [
         {
             "name": "aza/socket",
@@ -177,6 +177,329 @@
             ],
             "time": "2013-07-17 08:37:59"
         },
+        {
+            "name": "pleonasm/merkle-tree",
+            "version": "1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/pleonasm/merkle-tree.git",
+                "reference": "9ddc9d0a0e396750fada378f3aa90f6c02dd56a1"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/pleonasm/merkle-tree/zipball/9ddc9d0a0e396750fada378f3aa90f6c02dd56a1",
+                "reference": "9ddc9d0a0e396750fada378f3aa90f6c02dd56a1",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.4.0"
+            },
+            "require-dev": {
+                "ext-xdebug": ">=2.2.0",
+                "phpunit/php-invoker": ">=1.0.0,<1.2.0",
+                "phpunit/phpunit": "3.7.19",
+                "satooshi/php-coveralls": "*@dev",
+                "squizlabs/php_codesniffer": "*"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-0": {
+                    "Pleo": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "BSD-2-Clause"
+            ],
+            "authors": [
+                {
+                    "name": "Matt Nagi",
+                    "email": "matthew.nagi@base-2.net"
+                }
+            ],
+            "description": "An implementation of a Merkle Tree in PHP",
+            "time": "2013-05-22 20:46:20"
+        },
+        {
+            "name": "psr/log",
+            "version": "1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/php-fig/log.git",
+                "reference": "fe0936ee26643249e916849d48e3a51d5f5e278b"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/php-fig/log/zipball/fe0936ee26643249e916849d48e3a51d5f5e278b",
+                "reference": "fe0936ee26643249e916849d48e3a51d5f5e278b",
+                "shasum": ""
+            },
+            "type": "library",
+            "autoload": {
+                "psr-0": {
+                    "Psr\\Log\\": ""
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "PHP-FIG",
+                    "homepage": "http://www.php-fig.org/"
+                }
+            ],
+            "description": "Common interface for logging libraries",
+            "keywords": [
+                "log",
+                "psr",
+                "psr-3"
+            ],
+            "time": "2012-12-21 11:40:51"
+        },
+        {
+            "name": "xqus/phpecc",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/xqus/danter-php-ecc.git",
+                "reference": "e23c88ab49688bcf7414b2f76b8351850d0f72f8"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/xqus/danter-php-ecc/zipball/e23c88ab49688bcf7414b2f76b8351850d0f72f8",
+                "reference": "e23c88ab49688bcf7414b2f76b8351850d0f72f8",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.1"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-0": {
+                    "phpecc": "lib/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "GNU LGPL"
+            ],
+            "authors": [
+                {
+                    "name": "Matyas Danter",
+                    "role": "Developer"
+                }
+            ],
+            "homepage": "https://github.com/xqus/danter-php-ecc",
+            "keywords": [
+                "Eliptic Curve",
+                "php"
+            ],
+            "time": "2012-12-18 13:24:07"
+        },
+        {
+            "name": "zendframework/zend-crypt",
+            "version": "2.3.1",
+            "target-dir": "Zend/Crypt",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/zendframework/Component_ZendCrypt.git",
+                "reference": "da16e88a5115bb720318ec9b5220ae2ab81dfb5e"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://packages.zendframework.com/composer/zendframework-zend-crypt-da16e88a5115bb720318ec9b5220ae2ab81dfb5e-zip-3e85d3.zip",
+                "reference": "2.3.1",
+                "shasum": "904676ef5a4c1701a8f0522e55fdc51b537d0f4b"
+            },
+            "require": {
+                "php": ">=5.3.23",
+                "zendframework/zend-math": "self.version",
+                "zendframework/zend-servicemanager": "self.version",
+                "zendframework/zend-stdlib": "self.version"
+            },
+            "suggest": {
+                "ext-mcrypt": "Required for most features of Zend\\Crypt"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "2.3-dev",
+                    "dev-develop": "2.4-dev"
+                }
+            },
+            "autoload": {
+                "psr-0": {
+                    "Zend\\Crypt\\": ""
+                }
+            },
+            "license": [
+                "BSD-3-Clause"
+            ],
+            "description": " ",
+            "keywords": [
+                "crypt",
+                "zf2"
+            ],
+            "support": {
+                "source": "https://github.com/zendframework/Component_ZendCrypt/tree/release-2.3.1"
+            },
+            "time": "2014-04-15 15:28:46"
+        },
+        {
+            "name": "zendframework/zend-math",
+            "version": "2.3.1",
+            "target-dir": "Zend/Math",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/zendframework/Component_ZendMath.git",
+                "reference": "be6de5ba3d47e3f9a6732badea8bc724c49d0552"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://packages.zendframework.com/composer/zendframework-zend-math-be6de5ba3d47e3f9a6732badea8bc724c49d0552-zip-9dd212.zip",
+                "reference": "2.3.1",
+                "shasum": "19b03177f07dafcc83723615da074fcaf5fa76c6"
+            },
+            "require": {
+                "php": ">=5.3.23"
+            },
+            "suggest": {
+                "ext-bcmath": "If using the bcmath functionality",
+                "ext-gmp": "If using the gmp functionality",
+                "ircmaxell/random-lib": "Fallback random byte generator for Zend\\Math\\Rand if OpenSSL/Mcrypt extensions are unavailable",
+                "zendframework/zend-servicemanager": ">= current version, if using the BigInteger::factory functionality"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "2.3-dev",
+                    "dev-develop": "2.4-dev"
+                }
+            },
+            "autoload": {
+                "psr-0": {
+                    "Zend\\Math\\": ""
+                }
+            },
+            "license": [
+                "BSD-3-Clause"
+            ],
+            "description": " ",
+            "keywords": [
+                "math",
+                "zf2"
+            ],
+            "support": {
+                "source": "https://github.com/zendframework/Component_ZendMath/tree/release-2.3.1"
+            },
+            "time": "2014-04-15 15:29:09"
+        },
+        {
+            "name": "zendframework/zend-servicemanager",
+            "version": "2.3.1",
+            "target-dir": "Zend/ServiceManager",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/zendframework/Component_ZendServiceManager.git",
+                "reference": "652ab6e142b7afd1eede8f0f33b47d2599786c84"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://packages.zendframework.com/composer/zendframework-zend-servicemanager-652ab6e142b7afd1eede8f0f33b47d2599786c84-zip-cc071f.zip",
+                "reference": "2.3.1",
+                "shasum": "86b0bb930ffe070a0eb1b3727de7de9b317ee969"
+            },
+            "require": {
+                "php": ">=5.3.23"
+            },
+            "require-dev": {
+                "zendframework/zend-di": "self.version"
+            },
+            "suggest": {
+                "zendframework/zend-di": "Zend\\Di component"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "2.3-dev",
+                    "dev-develop": "2.4-dev"
+                }
+            },
+            "autoload": {
+                "psr-0": {
+                    "Zend\\ServiceManager\\": ""
+                }
+            },
+            "license": [
+                "BSD-3-Clause"
+            ],
+            "description": " ",
+            "keywords": [
+                "servicemanager",
+                "zf2"
+            ],
+            "support": {
+                "source": "https://github.com/zendframework/Component_ZendServiceManager/tree/release-2.3.1"
+            },
+            "time": "2014-04-15 15:28:43"
+        },
+        {
+            "name": "zendframework/zend-stdlib",
+            "version": "2.3.1",
+            "target-dir": "Zend/Stdlib",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/zendframework/Component_ZendStdlib.git",
+                "reference": "c1f4830018b5d4f034d32fa01a9e17ea176f56f6"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://packages.zendframework.com/composer/zendframework-zend-stdlib-c1f4830018b5d4f034d32fa01a9e17ea176f56f6-zip-b43c6b.zip",
+                "reference": "2.3.1",
+                "shasum": "7a094f270de9a54e1bfb2f0772e5f5cba2593475"
+            },
+            "require": {
+                "php": ">=5.3.23"
+            },
+            "require-dev": {
+                "zendframework/zend-eventmanager": "self.version",
+                "zendframework/zend-serializer": "self.version",
+                "zendframework/zend-servicemanager": "self.version"
+            },
+            "suggest": {
+                "zendframework/zend-eventmanager": "To support aggregate hydrator usage",
+                "zendframework/zend-serializer": "Zend\\Serializer component",
+                "zendframework/zend-servicemanager": "To support hydrator plugin manager usage"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "2.3-dev",
+                    "dev-develop": "2.4-dev"
+                }
+            },
+            "autoload": {
+                "psr-0": {
+                    "Zend\\Stdlib\\": ""
+                }
+            },
+            "license": [
+                "BSD-3-Clause"
+            ],
+            "description": " ",
+            "keywords": [
+                "stdlib",
+                "zf2"
+            ],
+            "support": {
+                "source": "https://github.com/zendframework/Component_ZendStdlib/tree/release-2.3.1"
+            },
+            "time": "2014-04-15 15:28:48"
+        }
+    ],
+    "packages-dev": [
         {
             "name": "phpunit/php-code-coverage",
             "version": "2.0.5",
@@ -426,16 +749,16 @@
         },
         {
             "name": "phpunit/phpunit",
-            "version": "4.0.14",
+            "version": "4.0.17",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/phpunit.git",
-                "reference": "a80b77d92a6c7723d77c6728b4ae37e92a65ac1d"
+                "reference": "8185f4bd21860cc72466009070a50bed6cd2eaca"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/a80b77d92a6c7723d77c6728b4ae37e92a65ac1d",
-                "reference": "a80b77d92a6c7723d77c6728b4ae37e92a65ac1d",
+                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/8185f4bd21860cc72466009070a50bed6cd2eaca",
+                "reference": "8185f4bd21860cc72466009070a50bed6cd2eaca",
                 "shasum": ""
             },
             "require": {
@@ -497,20 +820,20 @@
                 "testing",
                 "xunit"
             ],
-            "time": "2014-03-28 11:10:03"
+            "time": "2014-04-21 06:33:32"
         },
         {
             "name": "phpunit/phpunit-mock-objects",
-            "version": "2.0.4",
+            "version": "2.0.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/phpunit-mock-objects.git",
-                "reference": "c5e6274b8f2bf983cf883bb375cf44f99aff200e"
+                "reference": "3697daa12ab57b2bfc27b734ab963142f27b9159"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/phpunit-mock-objects/zipball/c5e6274b8f2bf983cf883bb375cf44f99aff200e",
-                "reference": "c5e6274b8f2bf983cf883bb375cf44f99aff200e",
+                "url": "https://api.github.com/repos/sebastianbergmann/phpunit-mock-objects/zipball/3697daa12ab57b2bfc27b734ab963142f27b9159",
+                "reference": "3697daa12ab57b2bfc27b734ab963142f27b9159",
                 "shasum": ""
             },
             "require": {
@@ -554,88 +877,7 @@
                 "mock",
                 "xunit"
             ],
-            "time": "2014-03-18 08:56:48"
-        },
-        {
-            "name": "pleonasm/merkle-tree",
-            "version": "1.0.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/pleonasm/merkle-tree.git",
-                "reference": "9ddc9d0a0e396750fada378f3aa90f6c02dd56a1"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/pleonasm/merkle-tree/zipball/9ddc9d0a0e396750fada378f3aa90f6c02dd56a1",
-                "reference": "9ddc9d0a0e396750fada378f3aa90f6c02dd56a1",
-                "shasum": ""
-            },
-            "require": {
-                "php": ">=5.4.0"
-            },
-            "require-dev": {
-                "ext-xdebug": ">=2.2.0",
-                "phpunit/php-invoker": ">=1.0.0,<1.2.0",
-                "phpunit/phpunit": "3.7.19",
-                "satooshi/php-coveralls": "*@dev",
-                "squizlabs/php_codesniffer": "*"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-0": {
-                    "Pleo": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "BSD-2-Clause"
-            ],
-            "authors": [
-                {
-                    "name": "Matt Nagi",
-                    "email": "matthew.nagi@base-2.net"
-                }
-            ],
-            "description": "An implementation of a Merkle Tree in PHP",
-            "time": "2013-05-22 20:46:20"
-        },
-        {
-            "name": "psr/log",
-            "version": "1.0.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/php-fig/log.git",
-                "reference": "fe0936ee26643249e916849d48e3a51d5f5e278b"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/php-fig/log/zipball/fe0936ee26643249e916849d48e3a51d5f5e278b",
-                "reference": "fe0936ee26643249e916849d48e3a51d5f5e278b",
-                "shasum": ""
-            },
-            "type": "library",
-            "autoload": {
-                "psr-0": {
-                    "Psr\\Log\\": ""
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "PHP-FIG",
-                    "homepage": "http://www.php-fig.org/"
-                }
-            ],
-            "description": "Common interface for logging libraries",
-            "keywords": [
-                "log",
-                "psr",
-                "psr-3"
-            ],
-            "time": "2012-12-21 11:40:51"
+            "time": "2014-04-16 14:50:10"
         },
         {
             "name": "sebastian/diff",
@@ -887,215 +1129,15 @@
             "description": "Symfony Yaml Component",
             "homepage": "http://symfony.com",
             "time": "2014-03-12 18:29:58"
-        },
-        {
-            "name": "zendframework/zend-crypt",
-            "version": "2.3.0",
-            "target-dir": "Zend/Crypt",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/zendframework/Component_ZendCrypt.git",
-                "reference": "ba5becb5adcbcf66c95480f179536b96878133d5"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://packages.zendframework.com/composer/zendframework-zend-crypt-ba5becb5adcbcf66c95480f179536b96878133d5-zip-386748.zip",
-                "reference": "2.3.0",
-                "shasum": "6a8bf6879a1df3edbe77a67b656de73d8f369972"
-            },
-            "require": {
-                "php": ">=5.3.23",
-                "zendframework/zend-math": "self.version",
-                "zendframework/zend-servicemanager": "self.version",
-                "zendframework/zend-stdlib": "self.version"
-            },
-            "type": "library",
-            "extra": {
-                "branch-alias": {
-                    "dev-master": "2.2-dev",
-                    "dev-develop": "2.3-dev"
-                }
-            },
-            "autoload": {
-                "psr-0": {
-                    "Zend\\Crypt\\": ""
-                }
-            },
-            "license": [
-                "BSD-3-Clause"
-            ],
-            "description": " ",
-            "keywords": [
-                "crypt",
-                "zf2"
-            ],
-            "support": {
-                "source": "https://github.com/zendframework/Component_ZendCrypt/tree/release-2.3.0"
-            },
-            "time": "2014-03-12 17:04:21"
-        },
-        {
-            "name": "zendframework/zend-math",
-            "version": "2.3.0",
-            "target-dir": "Zend/Math",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/zendframework/Component_ZendMath.git",
-                "reference": "156c107436b43c9bc8679adf6b7af08cf6bd10ce"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://packages.zendframework.com/composer/zendframework-zend-math-156c107436b43c9bc8679adf6b7af08cf6bd10ce-zip-8e0b1f.zip",
-                "reference": "2.3.0",
-                "shasum": "a8802a30c9c6109cdef59d2c2ece6fece26696ae"
-            },
-            "require": {
-                "php": ">=5.3.23"
-            },
-            "suggest": {
-                "ext-bcmath": "If using the bcmath functionality",
-                "ext-gmp": "If using the gmp functionality",
-                "ircmaxell/random-lib": "Fallback random byte generator for Zend\\Math\\Rand if OpenSSL/Mcrypt extensions are unavailable",
-                "zendframework/zend-servicemanager": ">= current version, if using the BigInteger::factory functionality"
-            },
-            "type": "library",
-            "extra": {
-                "branch-alias": {
-                    "dev-master": "2.2-dev",
-                    "dev-develop": "2.3-dev"
-                }
-            },
-            "autoload": {
-                "psr-0": {
-                    "Zend\\Math\\": ""
-                }
-            },
-            "license": [
-                "BSD-3-Clause"
-            ],
-            "description": " ",
-            "keywords": [
-                "math",
-                "zf2"
-            ],
-            "support": {
-                "source": "https://github.com/zendframework/Component_ZendMath/tree/release-2.3.0"
-            },
-            "time": "2014-03-14 16:21:41"
-        },
-        {
-            "name": "zendframework/zend-servicemanager",
-            "version": "2.3.0",
-            "target-dir": "Zend/ServiceManager",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/zendframework/Component_ZendServiceManager.git",
-                "reference": "310187f89fe830ed4484499f78338631f29d25c7"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://packages.zendframework.com/composer/zendframework-zend-servicemanager-310187f89fe830ed4484499f78338631f29d25c7-zip-8eeecd.zip",
-                "reference": "2.3.0",
-                "shasum": "386cece378117b3af54d44f3b93ca97ebbdfb894"
-            },
-            "require": {
-                "php": ">=5.3.23"
-            },
-            "require-dev": {
-                "zendframework/zend-di": "self.version"
-            },
-            "suggest": {
-                "zendframework/zend-di": "Zend\\Di component"
-            },
-            "type": "library",
-            "extra": {
-                "branch-alias": {
-                    "dev-master": "2.2-dev",
-                    "dev-develop": "2.3-dev"
-                }
-            },
-            "autoload": {
-                "psr-0": {
-                    "Zend\\ServiceManager\\": ""
-                }
-            },
-            "license": [
-                "BSD-3-Clause"
-            ],
-            "description": " ",
-            "keywords": [
-                "servicemanager",
-                "zf2"
-            ],
-            "support": {
-                "source": "https://github.com/zendframework/Component_ZendServiceManager/tree/release-2.3.0"
-            },
-            "time": "2014-03-14 16:22:14"
-        },
-        {
-            "name": "zendframework/zend-stdlib",
-            "version": "2.3.0",
-            "target-dir": "Zend/Stdlib",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/zendframework/Component_ZendStdlib.git",
-                "reference": "d1c481b8a43f2f079b16d3567960ba539e9dacaa"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://packages.zendframework.com/composer/zendframework-zend-stdlib-d1c481b8a43f2f079b16d3567960ba539e9dacaa-zip-8996b1.zip",
-                "reference": "2.3.0",
-                "shasum": "12f0c08a5f6bfb859cde9e2c6dd1e6c5086c009b"
-            },
-            "require": {
-                "php": ">=5.3.23"
-            },
-            "require-dev": {
-                "zendframework/zend-eventmanager": "self.version",
-                "zendframework/zend-serializer": "self.version",
-                "zendframework/zend-servicemanager": "self.version"
-            },
-            "suggest": {
-                "zendframework/zend-eventmanager": "To support aggregate hydrator usage",
-                "zendframework/zend-serializer": "Zend\\Serializer component",
-                "zendframework/zend-servicemanager": "To support hydrator plugin manager usage"
-            },
-            "type": "library",
-            "extra": {
-                "branch-alias": {
-                    "dev-master": "2.2-dev",
-                    "dev-develop": "2.3-dev"
-                }
-            },
-            "autoload": {
-                "psr-0": {
-                    "Zend\\Stdlib\\": ""
-                }
-            },
-            "license": [
-                "BSD-3-Clause"
-            ],
-            "description": " ",
-            "keywords": [
-                "stdlib",
-                "zf2"
-            ],
-            "support": {
-                "source": "https://github.com/zendframework/Component_ZendStdlib/tree/release-2.3.0"
-            },
-            "time": "2014-03-14 16:22:22"
         }
-    ],
-    "packages-dev": [
-
     ],
     "aliases": [
 
     ],
     "minimum-stability": "stable",
-    "stability-flags": [
-
-    ],
+    "stability-flags": {
+        "xqus/phpecc": 20
+    },
     "platform": {
         "php": ">=5.4.0"
     },
